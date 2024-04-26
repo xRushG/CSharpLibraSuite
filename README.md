@@ -15,5 +15,5 @@ Key features of the WinRegistry extension include:
 Overall, the WinRegistry library from CSharpLibraSuite simplifies the process of working with the Windows registry, offering a convenient and robust solution for managing registry settings and configurations in Windows-based applications and systems.
 
 
-#Disclaimer: Usage and copy of Library
+# Disclaimer: Usage and copy of Library
 The library provided here is offered 'as is' without any express or implied warranty. Use at your own risk. Feel free to make copies of libraries and modify them for your own usage.
