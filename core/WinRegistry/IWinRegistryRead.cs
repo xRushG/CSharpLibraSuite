@@ -1,10 +1,10 @@
-﻿using core.WindowsRegistry.entry;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
+using core.WinRegistry.RegEntry;
 
-namespace Core.WindowsRegistry
+namespace core.WinRegistry
 {
     [SupportedOSPlatform("windows")]
     public interface IWinRegistryRead
@@ -16,9 +16,9 @@ namespace Core.WindowsRegistry
         bool GetBoolValue(RegistryHive hive, string path, string propertyName, bool defaultValue = false);
         int GetDwordValue(RegistryHive hive, string path, string propertyName, int defaultValue = 0);
 
-        WinRegistryEntry GetRegistryEntry(RegistryHive hive, string path, string name);
-        List<WinRegistryEntry> GetRegistryEntries(RegistryHive hive, string path);
-        List<WinRegistryEntry> GetRegistryEntriesRecursive(RegistryHive hive, string path);
+        Entry GetRegistryEntry(RegistryHive hive, string path, string name);
+        List<Entry> GetRegistryEntries(RegistryHive hive, string path);
+        List<Entry> GetRegistryEntriesRecursive(RegistryHive hive, string path);
         #endregion
 
         #region registry tools

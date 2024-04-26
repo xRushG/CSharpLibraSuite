@@ -1,7 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 
-namespace core.WindowsRegistry
+namespace core.WinRegistry
 {
     internal static class WinRegistryErrorMessages
     {

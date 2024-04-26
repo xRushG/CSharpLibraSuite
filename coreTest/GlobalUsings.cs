@@ -1,2 +1,3 @@
 global using NUnit.Framework;
-global using Core.WindowsRegistry;
+global using core.WinRegistry;
+global using core.WinRegistry.RegEntry;

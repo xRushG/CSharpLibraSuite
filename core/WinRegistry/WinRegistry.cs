@@ -1,12 +1,11 @@
-﻿using core.WindowsRegistry;
-using core.WindowsRegistry.entry;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 using System.Security;
+using core.WinRegistry.RegEntry;
 
-namespace Core.WindowsRegistry
+namespace core.WinRegistry
 {
     [SupportedOSPlatform("windows")]
     public class WinRegistry : IWinRegistry, IWinRegistryRead
@@ -94,13 +93,13 @@ namespace Core.WindowsRegistry
         /// <param name="name">The name of the value to retrieve.</param>
         /// <returns>A WindowsRegistryKey object representing the specified registry key and value.</returns>
         /// <exception cref="ArgumentException">Thrown when the specified registry hive, path or name is invalid</exception>
-        public WinRegistryEntry GetRegistryEntry(RegistryHive hive, string path, string name)
+        public Entry GetRegistryEntry(RegistryHive hive, string path, string name)
         {
             WinRegistryErrorMessages.ThrowIfHiveInvalid(hive);
             WinRegistryErrorMessages.ThrowIfPathInvalid(path);
             WinRegistryErrorMessages.ThrowIfNameInvalid(name);
 
-            WinRegistryEntry registryEntry = new()
+            Entry registryEntry = new()
             {
                 Hive = hive,
                 Path = path,
@@ -131,19 +130,19 @@ namespace Core.WindowsRegistry
         /// <param name="path">The registry key path.</param>
         /// <returns>A list of WindowsRegistryKey objects, each representing a value within the specified registry key path.</returns>
         /// <exception cref="ArgumentException">Thrown when the specified registry hive or path is invalid</exception>
-        public List<WinRegistryEntry> GetRegistryEntries(RegistryHive hive, string path)
+        public List<Entry> GetRegistryEntries(RegistryHive hive, string path)
         {
             WinRegistryErrorMessages.ThrowIfHiveInvalid(hive);
             WinRegistryErrorMessages.ThrowIfPathInvalid(path);
 
-            List<WinRegistryEntry> list = new();
+            List<Entry> list = new();
             using (RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Default), key = baseKey.OpenSubKey(path))
             {
                 if (key != null)
                 {
                     foreach (string valueName in key.GetValueNames())
                     {
-                        list.Add(new WinRegistryEntry
+                        list.Add(new Entry
                         {
                                 Hive = hive,
                                 Path = path,
@@ -166,12 +165,12 @@ namespace Core.WindowsRegistry
         /// <param name="path">The registry key path.</param>
         /// <returns>A list of WindowsRegistryKey objects, each representing a value within the specified registry key path.</returns>
         /// <exception cref="ArgumentException">Thrown when the specified registry hive or path is invalid</exception>
-        public List<WinRegistryEntry> GetRegistryEntriesRecursive(RegistryHive hive, string path)
+        public List<Entry> GetRegistryEntriesRecursive(RegistryHive hive, string path)
         {
             WinRegistryErrorMessages.ThrowIfHiveInvalid(hive);
             WinRegistryErrorMessages.ThrowIfPathInvalid(path);
 
-            List<WinRegistryEntry> list = GetRegistryEntries(hive, path);
+            List<Entry> list = GetRegistryEntries(hive, path);
             using (RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Default), key = baseKey.OpenSubKey(path))
             {
                 if (key != null)

@@ -1,14 +1,13 @@
 ﻿using System;
-using core.WindowsRegistry.entry;
 using System.Collections.Generic;
 using Microsoft.Win32;
-using System.IO;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using System.Linq;
+using System.Runtime.Versioning;
 
-namespace CoreTest.WindowsRegistryTest
+namespace coreTest.WinRegistryTest
 {
-    public class WinRegistryTests : WinRegistry
+    [SupportedOSPlatform("windows")]
+    internal class WinRegistryTests : WinRegistry
     {
         private const RegistryHive TestHive = RegistryHive.CurrentUser;
         private const string TestPath = @"Software\CSharpLibraSuite";
@@ -309,7 +308,7 @@ namespace CoreTest.WindowsRegistryTest
 
             Assert.That(entries, Is.Not.Null);
             Assert.That(entries, Is.Not.Empty);
-            Assert.That(entries, Is.InstanceOf<List<WinRegistryEntry>>());
+            Assert.That(entries, Is.InstanceOf<List<Entry>>());
 
             foreach (var entry in entries)
             {
@@ -348,7 +347,7 @@ namespace CoreTest.WindowsRegistryTest
 
             Assert.That(entries, Is.Not.Null);
             Assert.That(entries, Is.Not.Empty);
-            Assert.That(entries, Is.InstanceOf<List<WinRegistryEntry>>());
+            Assert.That(entries, Is.InstanceOf<List<Entry>>());
 
             // Assert that the subkey is included in the entries list
             Assert.That(entries.Any(e => e.Name == testNameSubKey), Is.True, "Subkey entry should be included in the entries list.");
