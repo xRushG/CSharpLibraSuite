@@ -1,24 +1,44 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Linq;
 using System.Runtime.Versioning;
 
 namespace core.WinRegistry.RegEntry
 {
     [SupportedOSPlatform("windows")]
+    /// <summary>
+    /// Represents a string entry in the Windows Registry, providing methods to read and write string values.
+    /// </summary>
+    /// <remarks>
+    /// This class extends the functionality of the base Entry class to specifically handle string values in the Windows Registry.
+    /// It provides methods to read and write string values to the registry under a specified path and name.
+    /// Users can create instances of this class to work with string registry entries, providing hive, path, and name parameters.
+    /// </remarks>
     public class StringEntry : Entry
     {
+        #region Private Attributes
 
-        #region private attributes
         private string[] AllowedValues;
         private bool CaseSensitive;
         private Type EnumType;
+
         #endregion
 
-        #region public attributes
+        #region Public Property: DefaultValue, IsDefault
+
         /// <summary>
         /// Represents a default string value.
         /// </summary>
         public string DefaultValue { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether this entry is using its default value.
+        /// </summary>
+        public bool IsDefault { get; private set; }
+
+        #endregion
+
+        #region Public Override Property: Value, IsValid
 
         /// <summary>
         /// Represents the string value associated with the windows registry key.
@@ -44,7 +64,10 @@ namespace core.WinRegistry.RegEntry
         {
             get
             {
-                if (!IsValueSet())
+                if (!ProtectedHasValue())
+                    return false;
+
+                if (IsDefault)
                     return false;
 
                 if (AllowedValues != null)
@@ -56,9 +79,44 @@ namespace core.WinRegistry.RegEntry
                 return true;
             }
         }
+
         #endregion
 
-        #region public
+        #region Constructors
+
+        /// <summary>
+        /// Default constructor for the Entry class.
+        /// </summary>
+        public StringEntry() : base() { }
+
+        /// <summary>
+        /// Constructor for the Entry class with parameters.
+        /// </summary>
+        /// <param name="hive">The registry hive of the entry.</param>
+        /// <param name="path">The path of the registry entry.</param>
+        /// <param name="name">The name of the registry entry.</param>
+        /// <param name="defaultValue">The default integer value (default: null).</param>
+        public StringEntry(RegistryHive hive, string path, string name, string defaultValue = null)
+            : base(hive, path, name)
+        {
+            SetDefaultValue(defaultValue);
+        }
+
+        /// <summary>
+        /// Constructor for the Entry class with additional parameters for value and value kind.
+        /// </summary>
+        /// <param name="hive">The registry hive of the entry.</param>
+        /// <param name="path">The path of the registry entry.</param>
+        /// <param name="name">The name of the registry entry.</param>
+        /// <param name="value">The value of the registry entry.</param>
+        /// <param name="valueKind">The value kind of the registry entry.</param>
+        /// <param name="defaultValue">The default integer value (default: null).</param>
+        public StringEntry(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind, string defaultValue = null)
+            : base(hive, path, name, value, valueKind)
+        {
+            SetDefaultValue(defaultValue);
+        }
+
         /// <summary>
         /// Initializes a new instance with the specified base key and default value.
         /// </summary>
@@ -68,7 +126,7 @@ namespace core.WinRegistry.RegEntry
         public StringEntry(Entry RegistryEntry, string defaultValue = null)
         {
             if (RegistryEntry == null)
-                throw new ArgumentNullException(nameof(RegistryEntry), WinRegistryErrorMessages.InvalidBaseKeyParam);
+                throw new ArgumentNullException(nameof(RegistryEntry), InvalidBaseKeyParamMessage);
 
             Hive = RegistryEntry.Hive;
             Path = RegistryEntry.Path;
@@ -76,10 +134,13 @@ namespace core.WinRegistry.RegEntry
             ValueKind = RegistryEntry.ValueKind;
             base.Value = RegistryEntry.Value;
 
-            DefaultValue = defaultValue;
+            SetDefaultValue(defaultValue);
             ConvertToString(RegistryEntry.Value);
         }
 
+        #endregion
+
+        #region Public Methods: SetValidation, SetDefaultValue
         /// <summary>
         /// Sets the allowed values for validation, with an option for case sensitivity.
         /// </summary>
@@ -109,9 +170,38 @@ namespace core.WinRegistry.RegEntry
             }
         }
 
+        /// <summary>
+        /// Sets the default value for the registry entry. The value must be a non-negative integer.
+        /// </summary>
+        /// <param name="defaultValue">The default value to be set.</param>
+        public void SetDefaultValue(string defaultValue)
+        {
+            DefaultValue = defaultValue;
+        }
+
         #endregion
 
-        #region private
+        #region Override Method: Read, IsValueSet
+
+        public override void Read()
+        {
+            if (!IsKeyReadable())
+                throw new InvalidOperationException(UnableToReadMessage);
+
+            string stringValue = base.Value = ProtectedRead();
+            ConvertToString(stringValue);
+        }
+
+        protected override bool ProtectedHasValue()
+        {
+            return ValueKind == RegistryValueKind.String
+                && base.Value != null;
+        }
+
+        #endregion
+
+        #region Private Methods: ConvertToString, AssertAllowedValues, AssertEnum
+
         /// <summary>
         /// Converts the provided string value and updates the StringValue property.
         /// </summary>

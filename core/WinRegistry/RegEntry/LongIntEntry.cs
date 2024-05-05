@@ -7,33 +7,32 @@ namespace core.WinRegistry.RegEntry
 {
     [SupportedOSPlatform("windows")]
     /// <summary>
-    /// Represents an integer entry in the Windows Registry, providing methods to read and write integer values.
+    /// Represents a long integer entry in the Windows Registry, providing methods to read and write long integer values.
     /// </summary>
     /// <remarks>
-    /// This class extends the functionality of the base Entry class to specifically handle integer values in the Windows Registry.
-    /// It provides methods to read and write integer values to the registry under a specified path and name.
-    /// Users can create instances of this class to work with integer registry entries, providing hive, path, and name parameters.
+    /// This class extends the functionality of the base Entry class to specifically handle long integer values in the Windows Registry.
+    /// It provides methods to read and write long integer values to the registry under a specified path and name.
+    /// Users can create instances of this class to work with long integer registry entries, providing hive, path, and name parameters.
     /// </remarks>
-    public class IntegerEntry : Entry
+    public class LongIntEntry : Entry
     {
         #region Private Attributes
 
-        private int[] AllowedValues;
-        private int? MinValue;
-        private int? MaxValue;
-        private Type EnumType;
+        private long[] AllowedValues;
+        private long? MinValue;
+        private long? MaxValue;
 
         #endregion
 
         #region Public Property: DefaultValue, IsDefault
 
         /// <summary>
-        /// Represents a default integer value.
+        /// Represents a default 64-bit integer value.
         /// </summary>
         /// <remarks>
         /// The default value is initially set to `0`.
         /// </remarks>
-        public int DefaultValue { get; private set; } = 0;
+        public long DefaultValue { get; private set; } = 0;
 
         /// <summary>
         /// Gets a value indicating whether this entry is using its default value.
@@ -47,18 +46,18 @@ namespace core.WinRegistry.RegEntry
         /// <summary>
         /// Represents the integer value associated with the windows registry key.
         /// </summary>
-        public new int Value
+        public new long Value
         {
-            get => IntegerValue;
+            get => LongIntegerValue;
             private set
             {
                 if (value < 0)
                     throw new ArgumentException(InvalidNegativeIntValueMessage, nameof(Value));
 
-                IntegerValue = value;
+                LongIntegerValue = value;
             }
         }
-        private int IntegerValue;
+        private long LongIntegerValue;
 
         /// <summary>
         /// Indicates whether the value is valid based on defined validation criteria.
@@ -83,9 +82,6 @@ namespace core.WinRegistry.RegEntry
                 if (MinValue != null && MaxValue != null)
                     return (bool)AssertRange();
 
-                if (EnumType != null && EnumType.IsEnum)
-                    return (bool)AssertEnum();
-
                 return true;
             }
         }
@@ -97,7 +93,7 @@ namespace core.WinRegistry.RegEntry
         /// <summary>
         /// Default constructor for the Entry class.
         /// </summary>
-        public IntegerEntry() : base() { }
+        public LongIntEntry() : base() { }
 
         /// <summary>
         /// Constructor for the Entry class with parameters.
@@ -105,9 +101,9 @@ namespace core.WinRegistry.RegEntry
         /// <param name="hive">The registry hive of the entry.</param>
         /// <param name="path">The path of the registry entry.</param>
         /// <param name="name">The name of the registry entry.</param>
-        /// <param name="defaultValue">The default integer value (default: null).</param>
-        public IntegerEntry(RegistryHive hive, string path, string name, int defaultValue = 0) 
-            : base(hive, path, name) 
+        /// <param name="defaultValue">The default 64-bit integer value (default: null).</param>
+        public LongIntEntry(RegistryHive hive, string path, string name, long defaultValue = 0)
+            : base(hive, path, name)
         {
             SetDefaultValue(defaultValue);
         }
@@ -120,9 +116,9 @@ namespace core.WinRegistry.RegEntry
         /// <param name="name">The name of the registry entry.</param>
         /// <param name="value">The value of the registry entry.</param>
         /// <param name="valueKind">The value kind of the registry entry.</param>
-        /// <param name="defaultValue">The default integer value (default: null).</param>
-        public IntegerEntry(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind, int defaultValue = 0)
-            : base(hive, path, name, value, valueKind) 
+        /// <param name="defaultValue">The default 64-bit integer value (default: null).</param>
+        public LongIntEntry(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind, long defaultValue = 0)
+            : base(hive, path, name, value, valueKind)
         {
             SetDefaultValue(defaultValue);
         }
@@ -131,9 +127,9 @@ namespace core.WinRegistry.RegEntry
         /// Initializes a new instance with the specified base key and default value.
         /// </summary>
         /// <param name="RegistryEntry">The base windows registry key to derive properties from.</param>
-        /// <param name="defaultValue">The default integer value (default: null).</param>
+        /// <param name="defaultValue">The default 64-bit integer value (default: null).</param>
         /// <exception cref="ArgumentNullException">Thrown when baseKey is null.</exception>
-        public IntegerEntry(Entry RegistryEntry, int defaultValue = 0)
+        public LongIntEntry(Entry RegistryEntry, long defaultValue = 0)
         {
             if (RegistryEntry == null)
                 throw new ArgumentNullException(nameof(RegistryEntry), InvalidBaseKeyParamMessage);
@@ -141,11 +137,11 @@ namespace core.WinRegistry.RegEntry
             Hive = RegistryEntry.Hive;
             Path = RegistryEntry.Path;
             Name = RegistryEntry.Name;
-            ValueKind = RegistryValueKind.DWord;
+            ValueKind = RegistryValueKind.QWord;
             base.Value = RegistryEntry.Value;
 
             SetDefaultValue(defaultValue);
-            ConvertToInt(RegistryEntry.Value);
+            ConvertToLong(RegistryEntry.Value);
         }
 
         #endregion
@@ -153,10 +149,10 @@ namespace core.WinRegistry.RegEntry
         #region Public Methods: SetValidation, SetDefaultValue
 
         /// <summary>
-        /// Sets up validation using an array of allowed integer values.
+        /// Sets up validation using an array of allowed 64-bit integer values.
         /// </summary>
-        /// <param name="allowedValues">The array of allowed integer values.</param>
-        public void SetValidation(int[] allowedValues)
+        /// <param name="allowedValues">The array of allowed 64-bit integer values.</param>
+        public void SetValidation(long[] allowedValues)
         {
             if (allowedValues == null || allowedValues.Length == 0)
             {
@@ -173,11 +169,11 @@ namespace core.WinRegistry.RegEntry
         }
 
         /// <summary>
-        /// Sets up validation for a range of integer values.
+        /// Sets up validation for a range of 64-bit integer values.
         /// </summary>
         /// <param name="minValue">The minimum value of the range.</param>
         /// <param name="maxValue">The maximum value of the range.</param>
-        public void SetValidation(int minValue, int maxValue)
+        public void SetValidation(long minValue, long maxValue)
         {
             if (minValue < 0)
             {
@@ -196,23 +192,12 @@ namespace core.WinRegistry.RegEntry
             MaxValue = maxValue;
         }
 
-
-        /// <summary>
-        /// Sets up validation for an enumeration type.
-        /// </summary>
-        /// <typeparam name="TEnum">The enumeration type.</typeparam>
-        public void SetValidation<TEnum>() where TEnum : Enum
-        {
-            Type enumType = typeof(TEnum);
-            EnumType = enumType;
-        }
-
         /// <summary>
         /// Sets the default value for the registry entry. The value must be a non-negative integer.
         /// </summary>
         /// <param name="defaultValue">The default value to be set.</param>
         /// <exception cref="ArgumentException">Thrown when the specified default value is negative.</exception>
-        public void SetDefaultValue(int defaultValue)
+        public void SetDefaultValue(long defaultValue)
         {
             if (defaultValue < 0)
                 throw new ArgumentException(InvalidNegativeIntValueMessage, nameof(defaultValue));
@@ -222,7 +207,7 @@ namespace core.WinRegistry.RegEntry
 
         #endregion
 
-        #region Override Method: Read IsValueSet
+        #region Override Method: Read, IsValueSet
 
         public override void Read()
         {
@@ -230,32 +215,32 @@ namespace core.WinRegistry.RegEntry
                 throw new InvalidOperationException(UnableToReadMessage);
 
             string stringValue = base.Value = ProtectedRead();
-            ConvertToInt(stringValue);
+            ConvertToLong(stringValue);
         }
 
         protected override bool ProtectedHasValue()
         {
-            return ValueKind == RegistryValueKind.DWord
+            return (ValueKind == RegistryValueKind.DWord || ValueKind == RegistryValueKind.QWord)
                 && base.Value != null;
         }
 
         #endregion
 
-        #region Private Methods: ConvertToInt, AssertAllowedValues, AssertRange, AssertEnum
+        #region Private Methods: ConvertToLong, AssertAllowedValues, AssertRange
 
         /// <summary>
-        /// Converts the provided string value to an integer and updates the IntegerValue property.
+        /// Converts the provided string value to a 64-bit integer and updates the IntegerValue property.
         /// </summary>
         /// <param name="newValue">The string value to convert.</param>
         /// <remarks>
         /// If the conversion is successful and the value is set, it updates the IntegerValue property.
         /// If the conversion fails or the value is not set, it uses the DefaultValue as the fallback value.
         /// </remarks>
-        private void ConvertToInt(string newValue)
+        private void ConvertToLong(string newValue)
         {
-            if (IsSet && int.TryParse(newValue, out int intValue))
+            if (IsSet && long.TryParse(newValue, out long longValue))
             {
-                Value = intValue;
+                Value = longValue;
                 IsDefault = false;
             }
             else
@@ -266,38 +251,21 @@ namespace core.WinRegistry.RegEntry
         }
 
         /// <summary>
-        /// Validates if the integer value matches any value in the provided array of allowed values.
+        /// Validates if the 64-bit integer value matches any value in the provided array of allowed values.
         /// </summary>
         /// <returns>True if the value is valid, otherwise false.</returns>
         private bool AssertAllowedValues()
         {
-            return AllowedValues.Contains(IntegerValue);
+            return AllowedValues.Contains(LongIntegerValue);
         }
 
         /// <summary>
-        /// Validates if the integer value falls within the specified range.
+        /// Validates if the 64-bit integer value falls within the specified range.
         /// </summary>
         /// <returns>True if the value is within the range, otherwise false.</returns>
         private bool AssertRange()
         {
-            return IntegerValue >= MinValue && IntegerValue <= MaxValue;
-        }
-
-        /// <summary>
-        /// Validates if the integer value is within the range of enum values.
-        /// </summary>
-        /// <returns>True if the value is within the enum range, otherwise false.</returns>
-        private bool AssertEnum()
-        {
-            Array enumValues = Enum.GetValues(EnumType);
-            foreach (object enumValue in enumValues)
-            {
-                if (Convert.ToInt32(enumValue) == IntegerValue)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return LongIntegerValue >= MinValue && LongIntegerValue <= MaxValue;
         }
 
         #endregion

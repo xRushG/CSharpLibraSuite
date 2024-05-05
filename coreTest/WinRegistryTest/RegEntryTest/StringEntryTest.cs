@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.Win32;
 using NUnit.Framework.Internal;
+using System;
 using System.Runtime.Versioning;
 
 namespace coreTest.WinRegistryTest.RegEntryTest
@@ -68,12 +69,12 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         }
 
         [Test]
-        public void IsValid_InvalidValueKind_ReturnsFalse()
+        public void IsValid_InvalidValueKind_ThrowArgumentException()
         {
-            TestEntry.ValueKind = RegistryValueKind.Unknown; // change ValueKind
-            IntegerEntry entry = new(TestEntry);
-            TestEntry.ValueKind = RegistryValueKind.String; // change ValueKind back
-            Assert.That(entry.IsValid, Is.False);
+            Assert.Throws<ArgumentException>(() =>
+            {
+                StringEntry entry = new(TestEntry.Hive, TestEntry.Path, TestEntry.Name, TestEntry.Value, RegistryValueKind.Unknown);
+            });
         }
     }
 }
