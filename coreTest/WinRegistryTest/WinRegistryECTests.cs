@@ -8,8 +8,9 @@ namespace coreTest.WinRegistryTest
     [SupportedOSPlatform("windows")]
     internal class WinRegistryECTests : WinRegistryEC
     {
-        private const RegistryHive TestHive = RegistryHive.CurrentUser;
-        private const string TestPath = @"Software\CSharpLibraSuite";
+        private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
+        private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
+        private const string TestPath = $"{TestRoot}\\WinRegistryECTests";
 
         public enum WinRegistryPlusEnum
         {

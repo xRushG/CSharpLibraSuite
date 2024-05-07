@@ -8,6 +8,9 @@ namespace coreTest.WinRegistryTest.RegEntryTest
     [SupportedOSPlatform("windows")]
     internal class BoolEntryTest
     {
+        private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
+        private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
+        private const string TestPath = $"{TestRoot}\\BoolEntryTest";
 
         private Entry TestEntryString = new()
         {
@@ -57,6 +60,25 @@ namespace coreTest.WinRegistryTest.RegEntryTest
             TestEntryDWord.Value = "0";
             var entry = new BoolEntry(TestEntryDWord);
             Assert.That(entry.Value, Is.False);
+        }
+
+        [Test]
+        public void FluentWrite_And_Read_DoesNotThrow_ReturnsBoolFalse()
+        {
+            string name = "FluentReadAndWriteTest";
+
+            Assert.DoesNotThrow(() => BoolEntry.New(TestHive, TestPath, name, 0, RegistryValueKind.DWord, true).Write());
+
+            BoolEntry entry = BoolEntry.New(TestHive, TestPath, name, true).Read();
+            Assert.That(entry.Value, Is.False);
+        }
+
+        [OneTimeTearDown]
+        public void Cleanup()
+        {
+            // Delete all created tests
+            WinRegistry winReg = new();
+            winReg.DeleteTree(TestHive, TestRoot);
         }
     }
 }

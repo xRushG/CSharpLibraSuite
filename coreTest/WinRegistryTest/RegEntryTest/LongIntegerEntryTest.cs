@@ -9,6 +9,10 @@ namespace coreTest.WinRegistryTest.RegEntryTest
     [SupportedOSPlatform("windows")]
     internal class LongIntegerEntryTest
     {
+        private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
+        private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
+        private const string TestPath = $"{TestRoot}\\LongIntegerEntryTest";
+
         private Entry TestEntry = new()
         {
             Hive = RegistryHive.CurrentUser,
@@ -78,6 +82,25 @@ namespace coreTest.WinRegistryTest.RegEntryTest
             {
                 LongIntEntry entry = new(TestEntry);
             });
+        }
+
+        [Test]
+        public void FluentWrite_And_Read_DoesNotThrow_ReturnsLong15()
+        {
+            string name = "FluentReadAndWriteTest";
+
+            Assert.DoesNotThrow(() => LongIntEntry.New(TestHive, TestPath, name, 15, RegistryValueKind.QWord).Write());
+
+            LongIntEntry entry = LongIntEntry.New(TestHive, TestPath, name, 42).Read();
+            Assert.That(entry.Value, Is.EqualTo(15));
+        }
+
+        [OneTimeTearDown]
+        public void Cleanup()
+        {
+            // Delete all created tests
+            WinRegistry winReg = new();
+            winReg.DeleteTree(TestHive, TestRoot);
         }
     }
 }

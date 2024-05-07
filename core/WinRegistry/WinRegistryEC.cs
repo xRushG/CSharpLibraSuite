@@ -33,8 +33,7 @@ namespace core.WinRegistry
             ThrowIfPathInvalid(path);
             ThrowIfNameInvalid(name);
 
-            Entry WinRegistryKey = new(hive, path, name); // Create an Entry object
-            WinRegistryKey.Read(); // Read the registry entry
+            Entry WinRegistryKey = Entry.New(hive, path, name).Read(); // Create an Entry object
 
             return WinRegistryKey;
         }
@@ -115,9 +114,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyInteger instance representing the retrieved REG_DWORD value.</returns>
         public IntegerEntry GetInteger(RegistryHive hive, string path, string name, int defaultValue = 0)
         {
-            IntegerEntry IntegerEntry = new(hive, path, name, defaultValue);
-            IntegerEntry.Read();
-            return IntegerEntry;
+            return IntegerEntry.New(hive, path, name, defaultValue).Read();
         }
 
         /// <summary>
@@ -187,9 +184,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyInteger instance representing the retrieved REG_QWORD value.</returns>
         public LongIntEntry GetLongInt(RegistryHive hive, string path, string name, long defaultValue = 0)
         {
-            LongIntEntry LongIntEntry = new(hive, path, name, defaultValue);
-            LongIntEntry.Read();
-            return LongIntEntry;
+            return LongIntEntry.New(hive, path, name, defaultValue).Read();
         }
 
         /// <summary>
@@ -241,9 +236,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyString instance representing the retrieved REG_SZ value.</returns>
         public StringEntry GetString(RegistryHive hive, string path, string name, string defaultValue = null)
         {
-            StringEntry StringEntry = new(hive, path, name, defaultValue);
-            StringEntry.Read();
-            return StringEntry;
+            return StringEntry.New(hive, path, name, defaultValue).Read();
         }
 
         /// <summary>
@@ -294,9 +287,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyString instance representing the retrieved REG_SZ or REG_DWORD as bool value.</returns>
         public BoolEntry GetBoolean(RegistryHive hive, string path, string name, bool defaultValue = false)
         {
-            BoolEntry BoolEntry = new(hive, path, name, defaultValue);
-            BoolEntry.Read();
-            return BoolEntry;
+            return BoolEntry.New(hive, path, name, defaultValue).Read();
         }
 
         #endregion

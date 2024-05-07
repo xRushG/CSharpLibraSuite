@@ -9,8 +9,9 @@ namespace coreTest.WinRegistryTest.RegEntryTest
     [SupportedOSPlatform("windows")]
     internal class EntryTest
     {
-        private const RegistryHive TestHive = RegistryHive.CurrentUser;
-        private const string TestPath = @"Software\CSharpLibraSuite\EntryTests";
+        private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
+        private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
+        private const string TestPath = $"{TestRoot}\\EntryTests";
 
         [Test]
         public void Path_SetValidValue_GetReturnsSameValue()
@@ -166,6 +167,25 @@ namespace coreTest.WinRegistryTest.RegEntryTest
                 Assert.That(readEntry.ValueKind, Is.EqualTo(entry.ValueKind));
                 Assert.That(readEntry.Value, Is.EqualTo(entry.Value));
             });
+        }
+
+        [Test]
+        public void FluentWrite_And_Read_DoesNotThrow_ReturnsStrJustATest()
+        {
+            string name = "FluentReadAndWriteTest";
+
+            Assert.DoesNotThrow(() => Entry.New(TestHive, TestPath, name, "JustATest", RegistryValueKind.String).Write());
+
+            Entry entry = Entry.New(TestHive, TestPath, name).Read();
+            Assert.That(entry.Value, Is.EqualTo("JustATest"));
+        }
+
+        [OneTimeTearDown]
+        public void Cleanup()
+        {
+            // Delete all created tests
+            WinRegistry winReg = new();
+            winReg.DeleteTree(TestHive, TestRoot);
         }
     }
 }

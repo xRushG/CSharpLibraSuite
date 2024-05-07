@@ -9,6 +9,10 @@ namespace coreTest.WinRegistryTest.RegEntryTest
     [SupportedOSPlatform("windows")]
     internal class StringEntryTest
     {
+        private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
+        private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
+        private const string TestPath = $"{TestRoot}\\StringEntryTest";
+
         public enum TestEnum
         {
             First = 1,
@@ -75,6 +79,26 @@ namespace coreTest.WinRegistryTest.RegEntryTest
             {
                 StringEntry entry = new(TestEntry.Hive, TestEntry.Path, TestEntry.Name, TestEntry.Value, RegistryValueKind.Unknown);
             });
+        }
+
+
+        [Test]
+        public void FluentWrite_And_Read_DoesNotThrow_ReturnsStrJustATest()
+        {
+            string name = "FluentReadAndWriteTest";
+
+            Assert.DoesNotThrow(() => StringEntry.New(TestHive, TestPath, name, "JustATest", RegistryValueKind.String, "TestFailed").Write());
+
+            StringEntry entry = StringEntry.New(TestHive, TestPath, name, "TestFailed").Read();
+            Assert.That(entry.Value, Is.EqualTo("JustATest"));
+        }
+
+        [OneTimeTearDown]
+        public void Cleanup()
+        {
+            // Delete all created tests
+            WinRegistry winReg = new();
+            winReg.DeleteTree(TestHive, TestRoot);
         }
     }
 }

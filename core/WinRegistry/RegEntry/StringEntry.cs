@@ -140,6 +140,50 @@ namespace core.WinRegistry.RegEntry
 
         #endregion
 
+        #region Public Factory Method: New
+
+        /// <summary>
+        /// Creates a new instance of the StringEntry class with the specified registry hive, path, and name.
+        /// </summary>
+        /// <param name="hive">The registry hive of the entry.</param>
+        /// <param name="path">The path of the registry entry.</param>
+        /// <param name="name">The name of the registry entry.</param>
+        /// <returns>A new instance of the StringEntry class.</returns>
+        public static StringEntry New(RegistryHive hive, string path, string name, string defaultValue = null)
+        {
+            return new StringEntry(hive, path, name, defaultValue);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the StringEntry class with the specified registry hive, path, name, value, and value kind.
+        /// </summary>
+        /// <param name="hive">The registry hive of the entry.</param>
+        /// <param name="path">The path of the registry entry.</param>
+        /// <param name="name">The name of the registry entry.</param>
+        /// <param name="value">The integer value of the registry entry.</param>
+        /// <param name="valueKind">The value kind of the registry entry.</param>
+        /// <returns>A new instance of the StringEntry class.</returns>
+        public static StringEntry New(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind, string defaultValue = null)
+        {
+            return new StringEntry(hive, path, name, value.ToString(), valueKind, defaultValue);
+        }
+
+        #endregion
+
+        #region Public Override Fluent Interface: Read
+
+        public override StringEntry Read()
+        {
+            if (!IsKeyReadable())
+                throw new InvalidOperationException(UnableToReadMessage);
+
+            string stringValue = base.Value = ProtectedRead();
+            ConvertToString(stringValue);
+            return this;
+        }
+
+        #endregion
+
         #region Public Methods: SetValidation, SetDefaultValue
         /// <summary>
         /// Sets the allowed values for validation, with an option for case sensitivity.
@@ -181,17 +225,7 @@ namespace core.WinRegistry.RegEntry
 
         #endregion
 
-        #region Override Method: Read, IsValueSet
-
-        public override void Read()
-        {
-            if (!IsKeyReadable())
-                throw new InvalidOperationException(UnableToReadMessage);
-
-            string stringValue = base.Value = ProtectedRead();
-            ConvertToString(stringValue);
-        }
-
+        #region Override Method: ProtectedHasValue
         protected override bool ProtectedHasValue()
         {
             return ValueKind == RegistryValueKind.String

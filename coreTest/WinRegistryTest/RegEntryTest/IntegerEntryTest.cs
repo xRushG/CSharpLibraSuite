@@ -11,6 +11,10 @@ namespace coreTest.WinRegistryTest.RegEntryTest
     [SupportedOSPlatform("windows")]
     internal class IntegerEntryTest
     {
+        private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
+        private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
+        private const string TestPath = $"{TestRoot}\\IntegerEntryTest";
+
         public enum TestEnum
         {
             First = 1,
@@ -105,6 +109,25 @@ namespace coreTest.WinRegistryTest.RegEntryTest
             {
                 IntegerEntry entry = new(TestEntry);
             });
+        }
+
+        [Test]
+        public void FluentWrite_And_Read_DoesNotThrow_ReturnsInt12()
+        {
+            string name = "FluentReadAndWriteTest";
+
+            Assert.DoesNotThrow(() => IntegerEntry.New(TestHive, TestPath, name, 12, RegistryValueKind.DWord).Write());
+
+            IntegerEntry entry = IntegerEntry.New(TestHive, TestPath, name, 42).Read();
+            Assert.That(entry.Value, Is.EqualTo(12));
+        }
+
+        [OneTimeTearDown]
+        public void Cleanup()
+        {
+            // Delete all created tests
+            WinRegistry winReg = new();
+            winReg.DeleteTree(TestHive, TestPath);
         }
     }
 }

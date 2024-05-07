@@ -121,28 +121,47 @@ namespace core.WinRegistry.RegEntry
 
         #endregion
 
-        #region Public Methods: SetDefaultValue
+        #region Public Factory Method: New
 
         /// <summary>
-        /// Sets the default value for the registry entry. The value must be a non-negative integer.
+        /// Creates a new instance of the BoolEntry class with the specified registry hive, path, and name.
         /// </summary>
-        /// <param name="defaultValue">The default value to be set.</param>
-        public void SetDefaultValue(bool defaultValue)
+        /// <param name="hive">The registry hive of the entry.</param>
+        /// <param name="path">The path of the registry entry.</param>
+        /// <param name="name">The name of the registry entry.</param>
+        /// <returns>A new instance of the BoolEntry class.</returns>
+        public static BoolEntry New(RegistryHive hive, string path, string name, bool defaultValue = false)
         {
-            DefaultValue = defaultValue;
+            return new BoolEntry(hive, path, name, defaultValue);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the BoolEntry class with the specified registry hive, path, name, value, and value kind.
+        /// </summary>
+        /// <param name="hive">The registry hive of the entry.</param>
+        /// <param name="path">The path of the registry entry.</param>
+        /// <param name="name">The name of the registry entry.</param>
+        /// <param name="value">The integer value of the registry entry.</param>
+        /// <param name="valueKind">The value kind of the registry entry.</param>
+        /// <returns>A new instance of the BoolEntry class.</returns>
+        public static BoolEntry New(RegistryHive hive, string path, string name, int value, RegistryValueKind valueKind, bool defaultValue = false)
+        {
+            return new BoolEntry(hive, path, name, value.ToString(), valueKind, defaultValue);
         }
 
         #endregion
 
-        #region Override Method: Read, Write, IsValueSet
+        #region Public Override Fluent Interface: Read, Write
 
-        public override void Read()
+        public override BoolEntry Read()
         {
             if (!IsKeyReadable())
                 throw new InvalidOperationException(UnableToReadMessage);
 
             string stringValue = base.Value = ProtectedRead();
             ConvertToBool(stringValue);
+
+            return this;
         }
 
         /// <summary>
@@ -153,7 +172,7 @@ namespace core.WinRegistry.RegEntry
         /// When ValueKind is DWord, it writes '0' or '1'. 
         /// When ValueKind is String, it writes 'true' or 'false'.
         /// </remarks>
-        public override void Write()
+        public override BoolEntry Write()
         {
             if (!IsKeyWritable())
                 throw new InvalidOperationException(UnableToWriteMessage);
@@ -171,7 +190,26 @@ namespace core.WinRegistry.RegEntry
             {
                 throw new InvalidOperationException(ErrorWriteMessage, ex);
             }
+
+            return this;
         }
+
+        #endregion
+
+        #region Public Methods: SetDefaultValue
+
+        /// <summary>
+        /// Sets the default value for the registry entry. The value must be a non-negative integer.
+        /// </summary>
+        /// <param name="defaultValue">The default value to be set.</param>
+        public void SetDefaultValue(bool defaultValue)
+        {
+            DefaultValue = defaultValue;
+        }
+
+        #endregion
+
+        #region Override Methods: IsValueSet
 
         protected override bool ProtectedHasValue()
         {

@@ -7,8 +7,9 @@ namespace coreTest.WinRegistryTest
     [SupportedOSPlatform("windows")]
     internal class WinRegistryTests : WinRegistry
     {
-        private const RegistryHive TestHive = RegistryHive.CurrentUser;
-        private const string TestPath = @"Software\CSharpLibraSuite";
+        private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
+        private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
+        private const string TestPath = $"{TestRoot}\\WinRegistryTests";
 
         [SetUp]
         public void Setup()

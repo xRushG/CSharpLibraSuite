@@ -191,15 +191,60 @@ namespace core.WinRegistry.RegEntry
 
         #endregion
 
-        #region Public Methods: Read, Write, IsKeyReadable and IsKeyWritable
+        #region Public Factory Method: New
+
+        /// <summary>
+        /// Creates a new instance of the Entry class with the specified registry hive, path, and name.
+        /// </summary>
+        /// <param name="hive">The registry hive of the entry.</param>
+        /// <param name="path">The path of the registry entry.</param>
+        /// <param name="name">The name of the registry entry.</param>
+        /// <returns>A new instance of the Entry class.</returns>
+        public static Entry New(RegistryHive hive, string path, string name)
+        {
+            return new Entry(hive, path, name);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the Entry class with the specified registry hive, path, name, value, and value kind.
+        /// </summary>
+        /// <param name="hive">The registry hive of the entry.</param>
+        /// <param name="path">The path of the registry entry.</param>
+        /// <param name="name">The name of the registry entry.</param>
+        /// <param name="value">The integer value of the registry entry.</param>
+        /// <param name="valueKind">The value kind of the registry entry.</param>
+        /// <returns>A new instance of the Entry class.</returns>
+        public static Entry New(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind)
+        {
+            return new Entry(hive, path, name, value.ToString(), valueKind);
+        }
+
+        #endregion
+
+        #region Public Virtual Fluent Interface: Read, Write
 
         /// <summary>
         /// Reads the value of the registry entry from the specified registry path and assigns it to the Value property.
         /// </summary>
-        public virtual void Read()
+        public virtual Entry Read()
         {
             Value = ProtectedRead();
+            return this;
         }
+
+        /// <summary>
+        /// Writes the value of the registry entry to the specified registry path.
+        /// </summary>
+
+        public virtual Entry Write()
+        {
+            ProtectedWrite();
+            return this;
+        }
+
+        #endregion
+
+        #region Public Methods: IsKeyReadable and IsKeyWritable
 
         /// <summary>
         /// Checks if the Windows Registry key is ready for reading by ensuring that the hive,
@@ -209,14 +254,6 @@ namespace core.WinRegistry.RegEntry
         public bool IsKeyReadable()
         {
             return IsHiveSet() && IsPathSet();
-        }
-
-        /// <summary>
-        /// Writes the value of the registry entry to the specified registry path.
-        /// </summary>
-        public virtual void Write()
-        {
-            ProtectedWrite();
         }
 
         /// <summary>
@@ -325,6 +362,5 @@ namespace core.WinRegistry.RegEntry
         private bool IsNameSet() => Name != null;
 
         #endregion
-
     }
 }
