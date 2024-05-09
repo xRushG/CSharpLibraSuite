@@ -2,10 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
-using core.WinRegistry.RegEntry;
 using System.Linq;
 
-namespace core.WinRegistry
+namespace core.WinRegistry.RegEntry
 {
     [SupportedOSPlatform("windows")]
     /// <summary>
@@ -16,7 +15,7 @@ namespace core.WinRegistry
     /// It includes methods for advanced registry operations, error handling, and security measures to ensure safe and efficient registry manipulation.
     /// Users can create instances of this class to leverage enhanced capabilities for reading, writing, and managing registry entries in a secure and controlled manner.
     /// </remarks>
-    public class WinRegistryEC
+    public class RegistryEntryUtility : IRegistryEntryUtility
     {
         #region Public Entry Methods: GetEntry, GetEntries, GetEntriesRecursive
 

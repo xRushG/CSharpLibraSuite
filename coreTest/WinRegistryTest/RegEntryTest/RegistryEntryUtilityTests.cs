@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 
-namespace coreTest.WinRegistryTest
+namespace coreTest.WinRegistryTest.RegEntryTest
 {
     [SupportedOSPlatform("windows")]
-    internal class WinRegistryECTests : WinRegistryEC
+    internal class RegistryEntryUtilityTests : RegistryEntryUtility
     {
         private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
         private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
@@ -37,7 +37,7 @@ namespace coreTest.WinRegistryTest
 
         private readonly string[] Fruits = { "Banana", "Strawberry", "Apple" };
         private readonly int[] PrimeNumbers = { 2, 3, 5, 7, 11 };
-        private readonly long[] LongNumbers = { 2200000000, 2200000001, 2200000002, 2200000003, 2200000004 , 2247483647 };
+        private readonly long[] LongNumbers = { 2200000000, 2200000001, 2200000002, 2200000003, 2200000004, 2247483647 };
 
         [SetUp]
         public void Setup()
@@ -123,7 +123,7 @@ namespace coreTest.WinRegistryTest
         #endregion
 
         #region WinRegistryEC.GetRegistryEntriesRecursive()
-        
+
         [Test]
         public void GetRegistryEntriesRecursive_ReturnsCorrectEntries()
         {
