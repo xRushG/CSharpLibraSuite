@@ -200,7 +200,7 @@ namespace core.WinRegistry.RegEntry
         /// Sets up validation using an array of allowed integer values.
         /// </summary>
         /// <param name="allowedValues">The array of allowed integer values.</param>
-        public void SetValidation(int[] allowedValues)
+        public IntegerEntry SetValidation(int[] allowedValues)
         {
             if (allowedValues == null || allowedValues.Length == 0)
             {
@@ -214,6 +214,7 @@ namespace core.WinRegistry.RegEntry
             {
                 AllowedValues = allowedValues;
             }
+            return this;
         }
 
         /// <summary>
@@ -221,7 +222,7 @@ namespace core.WinRegistry.RegEntry
         /// </summary>
         /// <param name="minValue">The minimum value of the range.</param>
         /// <param name="maxValue">The maximum value of the range.</param>
-        public void SetValidation(int minValue, int maxValue)
+        public IntegerEntry SetValidation(int minValue, int maxValue)
         {
             if (minValue < 0)
             {
@@ -238,6 +239,7 @@ namespace core.WinRegistry.RegEntry
 
             MinValue = minValue;
             MaxValue = maxValue;
+            return this;
         }
 
 
@@ -245,10 +247,11 @@ namespace core.WinRegistry.RegEntry
         /// Sets up validation for an enumeration type.
         /// </summary>
         /// <typeparam name="TEnum">The enumeration type.</typeparam>
-        public void SetValidation<TEnum>() where TEnum : Enum
+        public IntegerEntry SetValidation<TEnum>() where TEnum : Enum
         {
             Type enumType = typeof(TEnum);
             EnumType = enumType;
+            return this;
         }
 
         /// <summary>

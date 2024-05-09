@@ -190,13 +190,14 @@ namespace core.WinRegistry.RegEntry
         /// </summary>
         /// <param name="allowedValues">The array of allowed values.</param>
         /// <param name="caseSensitive">Flag indicating whether the validation should be case sensitive (default: false).</param>
-        public void SetValidation(string[] allowedValues, bool caseSensitive = false)
+        public StringEntry SetValidation(string[] allowedValues, bool caseSensitive = false)
         {
             if (allowedValues != null && allowedValues.Length > 0)
             {
                 AllowedValues = allowedValues;
                 CaseSensitive = caseSensitive;
             }
+            return this;
         }
 
         /// <summary>
@@ -204,7 +205,7 @@ namespace core.WinRegistry.RegEntry
         /// </summary>
         /// <typeparam name="TEnum">The enumeration type.</typeparam>
         /// <param name="caseSensitive">Flag indicating whether the validation should be case sensitive (default: false).</param>
-        public void SetValidation<TEnum>(bool caseSensitive = false) where TEnum : Enum
+        public StringEntry SetValidation<TEnum>(bool caseSensitive = false) where TEnum : Enum
         {
             Type enumType = typeof(TEnum);
             if (enumType != null)
@@ -212,6 +213,7 @@ namespace core.WinRegistry.RegEntry
                 EnumType = enumType;
                 CaseSensitive = caseSensitive;
             }
+            return this;
         }
 
         /// <summary>

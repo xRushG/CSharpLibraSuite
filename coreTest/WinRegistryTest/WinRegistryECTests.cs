@@ -11,7 +11,7 @@ namespace coreTest.WinRegistryTest
         private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
         private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
         private const string TestPath = $"{TestRoot}\\WinRegistryECTests";
-
+        private readonly IWinRegistry winRegistry = new WinRegistry();
         public enum WinRegistryPlusEnum
         {
             None = 0,
@@ -42,18 +42,18 @@ namespace coreTest.WinRegistryTest
         [SetUp]
         public void Setup()
         {
-            SetValue(TestHive, TestPath, BoolAsString_True, "true", RegistryValueKind.String);
-            SetValue(TestHive, TestPath, BoolAsDWord_False, 0, RegistryValueKind.DWord);
+            winRegistry.SetValue(TestHive, TestPath, BoolAsString_True, "true", RegistryValueKind.String);
+            winRegistry.SetValue(TestHive, TestPath, BoolAsDWord_False, 0, RegistryValueKind.DWord);
 
-            SetValue(TestHive, TestPath, Integer_42, "42", RegistryValueKind.DWord);
-            SetValue(TestHive, TestPath, IntegerEnum_3, "3", RegistryValueKind.DWord);
+            winRegistry.SetValue(TestHive, TestPath, Integer_42, "42", RegistryValueKind.DWord);
+            winRegistry.SetValue(TestHive, TestPath, IntegerEnum_3, "3", RegistryValueKind.DWord);
 
-            SetValue(TestHive, TestPath, Long_2247483647, "2247483647", RegistryValueKind.QWord);
-            SetValue(TestHive, TestPath, Long_3, "3", RegistryValueKind.QWord);
+            winRegistry.SetValue(TestHive, TestPath, Long_2247483647, "2247483647", RegistryValueKind.QWord);
+            winRegistry.SetValue(TestHive, TestPath, Long_3, "3", RegistryValueKind.QWord);
 
-            SetValue(TestHive, TestPath, String_Apple, "Apple", RegistryValueKind.String);
-            SetValue(TestHive, TestPath, String_Dog, "Dog", RegistryValueKind.String);
-            SetValue(TestHive, TestPath, StringEnum_Donald, "Donald", RegistryValueKind.String);
+            winRegistry.SetValue(TestHive, TestPath, String_Apple, "Apple", RegistryValueKind.String);
+            winRegistry.SetValue(TestHive, TestPath, String_Dog, "Dog", RegistryValueKind.String);
+            winRegistry.SetValue(TestHive, TestPath, StringEnum_Donald, "Donald", RegistryValueKind.String);
         }
 
         #region WinRegistryEC.GetRegistryEntry()
@@ -64,7 +64,7 @@ namespace coreTest.WinRegistryTest
             const string testPath = TestPath + @"\GetRegistryEntry";
             const string testName = "TestEntry";
             const int testValue = 2011;
-            SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.DWord);
+            winRegistry.SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.DWord);
 
             var entry = GetEntry(TestHive, testPath, testName);
 
@@ -92,12 +92,12 @@ namespace coreTest.WinRegistryTest
             for (int i = 1; i <= 10; i++)
             {
                 string testName = $"{testNamePrefix}{i}";
-                SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.String);
+                winRegistry.SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.String);
             }
 
             const string testPathSubkeys = testPath + @"\Subkey";
             const string testNameSubKey = "TestSubEntry";
-            SetValue(TestHive, testPathSubkeys, testNameSubKey, testValue, RegistryValueKind.String);
+            winRegistry.SetValue(TestHive, testPathSubkeys, testNameSubKey, testValue, RegistryValueKind.String);
 
             var entries = GetEntries(TestHive, testPath);
 
@@ -134,12 +134,12 @@ namespace coreTest.WinRegistryTest
             for (int i = 1; i <= 10; i++)
             {
                 string testName = $"{testNamePrefix}{i}";
-                SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.String);
+                winRegistry.SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.String);
             }
 
             const string testSubkeyPath = testPath + @"\Subkey";
             const string testNameSubKey = "TestSubEntry";
-            SetValue(TestHive, testSubkeyPath, testNameSubKey, testValue, RegistryValueKind.String);
+            winRegistry.SetValue(TestHive, testSubkeyPath, testNameSubKey, testValue, RegistryValueKind.String);
 
             var entries = GetEntriesRecursive(TestHive, testPath);
 
@@ -486,7 +486,7 @@ namespace coreTest.WinRegistryTest
         public void Cleanup()
         {
             // Delete all created tests
-            DeleteTree(TestHive, TestPath);
+            winRegistry.DeleteTree(TestHive, TestPath);
         }
     }
 }

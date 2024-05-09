@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 using core.WinRegistry.RegEntry;
+using System.Linq;
 
 namespace core.WinRegistry
 {
@@ -15,7 +16,7 @@ namespace core.WinRegistry
     /// It includes methods for advanced registry operations, error handling, and security measures to ensure safe and efficient registry manipulation.
     /// Users can create instances of this class to leverage enhanced capabilities for reading, writing, and managing registry entries in a secure and controlled manner.
     /// </remarks>
-    public class WinRegistryEC : WinRegistry
+    public class WinRegistryEC
     {
         #region Public Entry Methods: GetEntry, GetEntries, GetEntriesRecursive
 
@@ -26,16 +27,9 @@ namespace core.WinRegistry
         /// <param name="path">The path of the key.</param>
         /// <param name="name">The name of the value to retrieve.</param>
         /// <returns>A WindowsRegistryKey object representing the specified registry key and value.</returns>
-        /// <exception cref="ArgumentException">Thrown when the specified registry hive, path or name is invalid</exception>
         public Entry GetEntry(RegistryHive hive, string path, string name)
         {
-            ThrowIfHiveInvalid(hive);
-            ThrowIfPathInvalid(path);
-            ThrowIfNameInvalid(name);
-
-            Entry WinRegistryKey = Entry.New(hive, path, name).Read(); // Create an Entry object
-
-            return WinRegistryKey;
+            return Entry.New(hive, path, name).Read();
         }
 
         /// <summary>
@@ -44,33 +38,15 @@ namespace core.WinRegistry
         /// <param name="hive">The registry hive.</param>
         /// <param name="path">The registry key path.</param>
         /// <returns>A list of WindowsRegistryKey objects, each representing a value within the specified registry key path.</returns>
-        /// <exception cref="ArgumentException">Thrown when the specified registry hive or path is invalid</exception>
         public List<Entry> GetEntries(RegistryHive hive, string path)
         {
-            ThrowIfHiveInvalid(hive);
-            ThrowIfPathInvalid(path);
-
-            List<Entry> list = new();
             using var key = RegistryKey.OpenBaseKey(hive, RegistryView.Default).OpenSubKey(path);
-            {
-                if (key != null)
-                {
-                    foreach (string name in key.GetValueNames())
-                    {
-                        list.Add(new Entry
-                        {
-                            Hive = hive,
-                            Path = path,
-                            Name = name,
-                            Value = key.GetValue(name).ToString(),
-                            ValueKind = key.GetValueKind(name)
-                        }
-                        );
-                    }
-                }
+            if (key == null)
+                return new List<Entry>(); // Return an empty list when no key is found
 
-            }
-            return list;
+            return key.GetValueNames()
+                .Select(name => Entry.New(hive, path, name).Read())
+                .ToList();
         }
 
         /// <summary>
@@ -79,14 +55,11 @@ namespace core.WinRegistry
         /// <param name="hive">The registry hive.</param>
         /// <param name="path">The registry key path.</param>
         /// <returns>A list of WindowsRegistryKey objects, each representing a value within the specified registry key path.</returns>
-        /// <exception cref="ArgumentException">Thrown when the specified registry hive or path is invalid</exception>
         public List<Entry> GetEntriesRecursive(RegistryHive hive, string path)
         {
-            ThrowIfHiveInvalid(hive);
-            ThrowIfPathInvalid(path);
-
-            List<Entry> list = GetEntries(hive, path);
-            using (RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Default), key = baseKey.OpenSubKey(path))
+            List<Entry> list = new();
+            using (var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Default))
+            using (var key = baseKey.OpenSubKey(path))
             {
                 if (key != null)
                 {
@@ -98,6 +71,7 @@ namespace core.WinRegistry
                 }
             }
 
+            list.AddRange(GetEntries(hive, path));
             return list;
         }
         #endregion
@@ -128,11 +102,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyInteger instance representing the retrieved REG_DWORD value.</returns>
         public IntegerEntry GetInteger<TEnum>(RegistryHive hive, string path, string name, int defaultValue = 0) where TEnum : Enum
         {
-            IntegerEntry IntegerEntry = new(hive, path, name, defaultValue);
-            IntegerEntry.SetValidation<TEnum>();
-            IntegerEntry.Read();
-
-            return IntegerEntry;
+            return IntegerEntry.New(hive, path, name, defaultValue).SetValidation<TEnum>().Read();
         }
 
         /// <summary>
@@ -146,10 +116,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyInteger instance representing the retrieved REG_DWORD value.</returns>
         public IntegerEntry GetInteger(RegistryHive hive, string path, string name, int[] allowedValues, int defaultValue = 0)
         {
-            IntegerEntry IntegerEntry = new(hive, path, name, defaultValue);
-            IntegerEntry.SetValidation(allowedValues);
-            IntegerEntry.Read();
-            return IntegerEntry;
+            return IntegerEntry.New(hive, path, name, defaultValue).SetValidation(allowedValues).Read();
         }
 
         /// <summary>
@@ -164,10 +131,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyInteger instance representing the retrieved REG_DWORD value.</returns>
         public IntegerEntry GetInteger(RegistryHive hive, string path, string name, int minimum, int maximum, int defaultValue = 0)
         {
-            IntegerEntry IntegerEntry = new(hive, path, name, defaultValue);
-            IntegerEntry.SetValidation(minimum, maximum);
-            IntegerEntry.Read();
-            return IntegerEntry;
+            return IntegerEntry.New(hive, path, name, defaultValue).SetValidation(minimum, maximum).Read();
         }
 
         #endregion
@@ -198,10 +162,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyInteger instance representing the retrieved REG_QWORD value.</returns>
         public LongIntEntry GetLongInt(RegistryHive hive, string path, string name, long[] allowedValues, long defaultValue = 0)
         {
-            LongIntEntry LongIntEntry = new(hive, path, name, defaultValue);
-            LongIntEntry.SetValidation(allowedValues);
-            LongIntEntry.Read();
-            return LongIntEntry;
+            return LongIntEntry.New(hive, path, name, defaultValue).SetValidation(allowedValues).Read();
         }
 
         /// <summary>
@@ -216,10 +177,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyInteger instance representing the retrieved REG_QWORD value.</returns>
         public LongIntEntry GetLongInt(RegistryHive hive, string path, string name, long minimum, long maximum, long defaultValue = 0)
         {
-            LongIntEntry LongIntEntry = new(hive, path, name, defaultValue);
-            LongIntEntry.SetValidation(minimum, maximum);
-            LongIntEntry.Read();
-            return LongIntEntry;
+            return LongIntEntry.New(hive, path, name, defaultValue).SetValidation(minimum, maximum).Read();
         }
 
         #endregion
@@ -250,10 +208,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyString instance representing the retrieved REG_SZ value.</returns>
         public StringEntry GetString(RegistryHive hive, string path, string name, string[] allowedValues, string defaultValue = null)
         {
-            StringEntry StringEntry = new(hive, path, name, defaultValue);
-            StringEntry.SetValidation(allowedValues);
-            StringEntry.Read();
-            return StringEntry;
+            return StringEntry.New(hive, path, name, defaultValue).SetValidation(allowedValues).Read();
         }
 
         /// <summary>
@@ -267,10 +222,7 @@ namespace core.WinRegistry
         /// <returns>A WindowsRegistryKeyString instance representing the retrieved REG_SZ value.</returns>
         public StringEntry GetString<TEnum>(RegistryHive hive, string path, string name, string defaultValue = null) where TEnum : Enum
         {
-            StringEntry StringEntry = new(hive, path, name, defaultValue);
-            StringEntry.SetValidation<TEnum>();
-            StringEntry.Read();
-            return StringEntry;
+            return StringEntry.New(hive, path, name, defaultValue).SetValidation<TEnum>().Read();
         }
 
         #endregion
