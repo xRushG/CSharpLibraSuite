@@ -2,11 +2,9 @@
 using Microsoft.Win32;
 using NUnit.Framework.Internal;
 using System;
-using System.IO;
 using System.Runtime.Versioning;
-using System.Xml.Linq;
 
-namespace coreTest.WinRegistryTest.RegEntryTest
+namespace coreTest.WinRegistryTest.RegistryEntryTest
 {
     [SupportedOSPlatform("windows")]
     internal class IntegerEntryTest
@@ -22,7 +20,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
             Third = 3
         }
 
-        private Entry TestEntry = new()
+        private BaseRegistryEntry TestEntry = new()
         {
             Hive = RegistryHive.CurrentUser,
             Path = @"SOFTWARE\Microsoft",

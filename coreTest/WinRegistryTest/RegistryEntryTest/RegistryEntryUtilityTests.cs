@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 
-namespace coreTest.WinRegistryTest.RegEntryTest
+namespace coreTest.WinRegistryTest.RegistryEntryTest
 {
     [SupportedOSPlatform("windows")]
     internal class RegistryEntryUtilityTests : RegistryEntryUtility
@@ -104,7 +104,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
 
             Assert.That(entries, Is.Not.Null);
             Assert.That(entries, Is.Not.Empty);
-            Assert.That(entries, Is.InstanceOf<List<Entry>>());
+            Assert.That(entries, Is.InstanceOf<List<BaseRegistryEntry>>());
 
             foreach (var entry in entries)
             {
@@ -145,7 +145,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
 
             Assert.That(entries, Is.Not.Null);
             Assert.That(entries, Is.Not.Empty);
-            Assert.That(entries, Is.InstanceOf<List<Entry>>());
+            Assert.That(entries, Is.InstanceOf<List<BaseRegistryEntry>>());
 
             // Assert that the subkey is included in the entries list
             Assert.That(entries.Any(e => e.Name == testNameSubKey), Is.True, "Subkey entry should be included in the entries list.");

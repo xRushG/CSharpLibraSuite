@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using System.Runtime.Versioning;
 
-namespace core.WinRegistry.RegEntry
+namespace core.WinRegistry.RegistryEntry
 {
     [SupportedOSPlatform("windows")]
     /// <summary>
@@ -14,7 +14,7 @@ namespace core.WinRegistry.RegEntry
     /// It provides methods to read and write string values to the registry under a specified path and name.
     /// Users can create instances of this class to work with string registry entries, providing hive, path, and name parameters.
     /// </remarks>
-    public class StringEntry : Entry
+    public class StringEntry : BaseRegistryEntry
     {
         #region Private Attributes
 
@@ -123,7 +123,7 @@ namespace core.WinRegistry.RegEntry
         /// <param name="RegistryEntry">The base Windows Registry key to derive properties from.</param>
         /// <param name="defaultValue">The default string value (default: null).</param>
         /// <exception cref="ArgumentNullException">Thrown when baseKey is null.</exception>
-        public StringEntry(Entry RegistryEntry, string defaultValue = null)
+        public StringEntry(BaseRegistryEntry RegistryEntry, string defaultValue = null)
         {
             if (RegistryEntry == null)
                 throw new ArgumentNullException(nameof(RegistryEntry), InvalidBaseKeyParamMessage);

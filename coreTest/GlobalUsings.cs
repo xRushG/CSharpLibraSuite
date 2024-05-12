@@ -1,6 +1,6 @@
 global using NUnit.Framework;
 global using core.WinRegistry;
-global using core.WinRegistry.RegEntry;
+global using core.WinRegistry.RegistryEntry;
 using Microsoft.Win32;
 
 namespace coreTest

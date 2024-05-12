@@ -3,7 +3,7 @@ using Microsoft.Win32;
 using NUnit.Framework.Internal;
 using System.Runtime.Versioning;
 
-namespace coreTest.WinRegistryTest.RegEntryTest
+namespace coreTest.WinRegistryTest.RegistryEntryTest
 {
     [SupportedOSPlatform("windows")]
     internal class BoolEntryTest
@@ -12,7 +12,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
         private const string TestPath = $"{TestRoot}\\BoolEntryTest";
 
-        private Entry TestEntryString = new()
+        private BaseRegistryEntry TestEntryString = new()
         {
             Hive = RegistryHive.CurrentUser,
             Path = @"SOFTWARE\Microsoft",
@@ -21,7 +21,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
             Value = "true"
         };
 
-        private Entry TestEntryDWord = new()
+        private BaseRegistryEntry TestEntryDWord = new()
         {
             Hive = RegistryHive.CurrentUser,
             Path = @"SOFTWARE\Microsoft",

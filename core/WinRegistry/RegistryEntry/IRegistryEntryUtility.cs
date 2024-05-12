@@ -1,16 +1,16 @@
 ﻿using Microsoft.Win32;
 using System.Collections.Generic;
 
-namespace core.WinRegistry.RegEntry
+namespace core.WinRegistry.RegistryEntry
 {
     /// <summary>
     /// Interface for providing enhanced control and functionality to interact with the Windows Registry.
     /// </summary>
     public interface IRegistryEntryUtility
     {
-        Entry GetEntry(RegistryHive hive, string path, string name);
-        List<Entry> GetEntries(RegistryHive hive, string path);
-        List<Entry> GetEntriesRecursive(RegistryHive hive, string path);
+        BaseRegistryEntry GetEntry(RegistryHive hive, string path, string name);
+        List<BaseRegistryEntry> GetEntries(RegistryHive hive, string path);
+        List<BaseRegistryEntry> GetEntriesRecursive(RegistryHive hive, string path);
         IntegerEntry GetInteger(RegistryHive hive, string path, string name, int defaultValue = 0);
         IntegerEntry GetInteger<TEnum>(RegistryHive hive, string path, string name, int defaultValue = 0) where TEnum : System.Enum;
         IntegerEntry GetInteger(RegistryHive hive, string path, string name, int[] allowedValues, int defaultValue = 0);

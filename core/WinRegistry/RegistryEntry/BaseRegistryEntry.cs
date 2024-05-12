@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Runtime.Versioning;
-using System.Xml.Linq;
 using Microsoft.Win32;
 
-namespace core.WinRegistry.RegEntry
+namespace core.WinRegistry.RegistryEntry
 {
     [SupportedOSPlatform("windows")]
     /// <summary>
@@ -14,7 +13,7 @@ namespace core.WinRegistry.RegEntry
     /// It provides methods to read and write values to the registry under a specified path and name, with support for various value types.
     /// Users can create instances of this class to work with specific registry entries, providing hive, path, and name parameters.
     /// </remarks>
-    public class Entry
+    public class BaseRegistryEntry
     {
         #region Private and Protected Constants
 
@@ -157,7 +156,7 @@ namespace core.WinRegistry.RegEntry
         /// <summary>
         /// Default constructor for the Entry class.
         /// </summary>
-        public Entry() { }
+        public BaseRegistryEntry() { }
 
         /// <summary>
         /// Constructor for the Entry class with parameters.
@@ -165,7 +164,7 @@ namespace core.WinRegistry.RegEntry
         /// <param name="hive">The registry hive of the entry.</param>
         /// <param name="path">The path of the registry entry.</param>
         /// <param name="name">The name of the registry entry.</param>
-        public Entry(RegistryHive hive, string path, string name)
+        public BaseRegistryEntry(RegistryHive hive, string path, string name)
         {
             Hive = hive;
             Path = path;
@@ -180,7 +179,7 @@ namespace core.WinRegistry.RegEntry
         /// <param name="name">The name of the registry entry.</param>
         /// <param name="value">The value of the registry entry.</param>
         /// <param name="valueKind">The value kind of the registry entry.</param>
-        public Entry(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind)
+        public BaseRegistryEntry(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind)
         {
             Hive = hive;
             Path = path;
@@ -200,9 +199,9 @@ namespace core.WinRegistry.RegEntry
         /// <param name="path">The path of the registry entry.</param>
         /// <param name="name">The name of the registry entry.</param>
         /// <returns>A new instance of the Entry class.</returns>
-        public static Entry New(RegistryHive hive, string path, string name)
+        public static BaseRegistryEntry New(RegistryHive hive, string path, string name)
         {
-            return new Entry(hive, path, name);
+            return new BaseRegistryEntry(hive, path, name);
         }
 
         /// <summary>
@@ -214,9 +213,9 @@ namespace core.WinRegistry.RegEntry
         /// <param name="value">The integer value of the registry entry.</param>
         /// <param name="valueKind">The value kind of the registry entry.</param>
         /// <returns>A new instance of the Entry class.</returns>
-        public static Entry New(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind)
+        public static BaseRegistryEntry New(RegistryHive hive, string path, string name, string value, RegistryValueKind valueKind)
         {
-            return new Entry(hive, path, name, value.ToString(), valueKind);
+            return new BaseRegistryEntry(hive, path, name, value.ToString(), valueKind);
         }
 
         #endregion
@@ -226,7 +225,7 @@ namespace core.WinRegistry.RegEntry
         /// <summary>
         /// Reads the value of the registry entry from the specified registry path and assigns it to the Value property.
         /// </summary>
-        public virtual Entry Read()
+        public virtual BaseRegistryEntry Read()
         {
             Value = ProtectedRead();
             return this;
@@ -236,7 +235,7 @@ namespace core.WinRegistry.RegEntry
         /// Writes the value of the registry entry to the specified registry path.
         /// </summary>
 
-        public virtual Entry Write()
+        public virtual BaseRegistryEntry Write()
         {
             ProtectedWrite();
             return this;

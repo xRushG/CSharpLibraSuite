@@ -4,10 +4,10 @@ using NUnit.Framework.Internal;
 using System;
 using System.Runtime.Versioning;
 
-namespace coreTest.WinRegistryTest.RegEntryTest
+namespace coreTest.WinRegistryTest.RegistryEntryTest
 {
     [SupportedOSPlatform("windows")]
-    internal class EntryTest
+    internal class BaseRegistryEntryTest
     {
         private const string TestRoot = GlobalConstants.WinRegTestsRootPath;
         private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
@@ -17,7 +17,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         public void Path_SetValidValue_GetReturnsSameValue()
         {
             string expectedPath = @"SOFTWARE\Microsoft";
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Path = expectedPath
             };
@@ -27,7 +27,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         [Test]
         public void Path_SetNullValue_ThrowsArgumentNullException()
         {
-            var entry = new Entry();
+            var entry = new BaseRegistryEntry();
             Assert.That(() => entry.Path = null, Throws.ArgumentNullException);
         }
 
@@ -35,7 +35,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         public void Name_SetValidValue_GetReturnsSameValue()
         {
             string expectedName = "Version";
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Name = expectedName
             };
@@ -46,7 +46,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         public void Value_SetValidValue_GetReturnsSameValue()
         {
             string expectedValue = "1.0";
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Value = expectedValue
             };
@@ -56,14 +56,14 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         [Test]
         public void ValueKind_SetInvalidValue_ThrowsArgumentException()
         {
-            var entry = new Entry();
+            var entry = new BaseRegistryEntry();
             Assert.That(() => entry.ValueKind = (RegistryValueKind)100, Throws.ArgumentException);
         }
 
         [Test]
         public void IsSet_ValueHasBeenSet_ReturnsTrue()
         {
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Value = "Test"
             };
@@ -73,7 +73,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         [Test]
         public void IsKeyReadable_AllPropertiesSet_ReturnsTrue()
         {
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Hive = RegistryHive.LocalMachine,
                 Path = @"SOFTWARE\Microsoft",
@@ -85,7 +85,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         [Test]
         public void IsKeyWritable_AllPropertiesSet_ReturnsTrue()
         {
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Hive = RegistryHive.LocalMachine,
                 ValueKind = RegistryValueKind.String,
@@ -99,14 +99,14 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         [Test]
         public void Read_WhenRegistryKeyIsNull_ThrowsInvalidOperationException()
         {
-            var entry = new Entry();
+            var entry = new BaseRegistryEntry();
             Assert.That(() => entry.Read(), Throws.InvalidOperationException);
         }
 
         [Test]
         public void Write_WhenKeyIsUnwritable_ThrowsInvalidOperationException()
         {
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Hive = RegistryHive.CurrentUser,
                 Path = @"SOFTWARE\Microsoft",
@@ -118,7 +118,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         [Test]
         public void WriteDefaultAndReadDefault_Entry_DoesNotThrowAndReadsCorrectly()
         {
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Hive = TestHive,
                 Path = TestPath,
@@ -126,7 +126,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
                 ValueKind = RegistryValueKind.DWord,
             };
 
-            var readEntry = new Entry
+            var readEntry = new BaseRegistryEntry
             {
                 Hive = TestHive,
                 Path = TestPath,
@@ -144,7 +144,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         [Test]
         public void WriteAndRead_Entry_DoesNotThrowAndReadsCorrectly()
         {
-            var entry = new Entry
+            var entry = new BaseRegistryEntry
             {
                 Hive = TestHive,
                 Path = TestPath,
@@ -153,7 +153,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
                 Value = "200"
             };
 
-            var readEntry = new Entry
+            var readEntry = new BaseRegistryEntry
             {
                 Hive = TestHive,
                 Path = TestPath,
@@ -174,9 +174,9 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         {
             string name = "FluentReadAndWriteTest";
 
-            Assert.DoesNotThrow(() => Entry.New(TestHive, TestPath, name, "JustATest", RegistryValueKind.String).Write());
+            Assert.DoesNotThrow(() => BaseRegistryEntry.New(TestHive, TestPath, name, "JustATest", RegistryValueKind.String).Write());
 
-            Entry entry = Entry.New(TestHive, TestPath, name).Read();
+            BaseRegistryEntry entry = BaseRegistryEntry.New(TestHive, TestPath, name).Read();
             Assert.That(entry.Value, Is.EqualTo("JustATest"));
         }
 

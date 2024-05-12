@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.Versioning;
 
-namespace core.WinRegistry.RegEntry
+namespace core.WinRegistry.RegistryEntry
 {
     [SupportedOSPlatform("windows")]
     /// <summary>
@@ -13,7 +13,7 @@ namespace core.WinRegistry.RegEntry
     /// It provides methods to read and write boolean values to the registry under a specified path and name.
     /// Users can create instances of this class to work with boolean registry entries, providing hive, path, and name parameters.
     /// </remarks>
-    public class BoolEntry : Entry
+    public class BoolEntry : BaseRegistryEntry
     {
         #region Public Property: DefaultValue, IsDefault
 
@@ -104,7 +104,7 @@ namespace core.WinRegistry.RegEntry
         /// <param name="RegistryEntry">The base Windows Registry key to derive properties from.</param>
         /// <param name="defaultValue">The default string value (default: null).</param>
         /// <exception cref="ArgumentNullException">Thrown when baseKey is null.</exception>
-        public BoolEntry(Entry RegistryEntry, bool defaultValue = false)
+        public BoolEntry(BaseRegistryEntry RegistryEntry, bool defaultValue = false)
         {
             if (RegistryEntry == null)
                 throw new ArgumentNullException(nameof(RegistryEntry), InvalidBaseKeyParamMessage);
@@ -253,11 +253,11 @@ namespace core.WinRegistry.RegEntry
             string lcValue = value.ToLower();
             if (lcValue == "true" || lcValue == "false")
             {
-                return RegistryValueKind.String; // Assuming you want to represent "true"/"false" as DWORD
+                return RegistryValueKind.String; //  Represent "true"/"false" as DWORD
             }
             else if (lcValue == "0" || lcValue == "1")
             {
-                return RegistryValueKind.DWord; // Assuming you want to represent "0"/"1" as DWORD
+                return RegistryValueKind.DWord; // Represent "0"/"1" as DWORD
             }
             else
             {

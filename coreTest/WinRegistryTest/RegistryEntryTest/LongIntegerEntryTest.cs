@@ -4,7 +4,7 @@ using NUnit.Framework.Internal;
 using System;
 using System.Runtime.Versioning;
 
-namespace coreTest.WinRegistryTest.RegEntryTest
+namespace coreTest.WinRegistryTest.RegistryEntryTest
 {
     [SupportedOSPlatform("windows")]
     internal class LongIntegerEntryTest
@@ -13,7 +13,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
         private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
         private const string TestPath = $"{TestRoot}\\LongIntegerEntryTest";
 
-        private Entry TestEntry = new()
+        private BaseRegistryEntry TestEntry = new()
         {
             Hive = RegistryHive.CurrentUser,
             Path = @"SOFTWARE\Microsoft",

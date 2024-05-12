@@ -4,7 +4,7 @@ using NUnit.Framework.Internal;
 using System;
 using System.Runtime.Versioning;
 
-namespace coreTest.WinRegistryTest.RegEntryTest
+namespace coreTest.WinRegistryTest.RegistryEntryTest
 {
     [SupportedOSPlatform("windows")]
     internal class StringEntryTest
@@ -20,7 +20,7 @@ namespace coreTest.WinRegistryTest.RegEntryTest
             Third = 3
         }
 
-        private Entry TestEntry = new()
+        private BaseRegistryEntry TestEntry = new()
         {
             Hive = RegistryHive.CurrentUser,
             Path = @"SOFTWARE\Microsoft",
