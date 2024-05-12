@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Runtime.Versioning;
 
 namespace core.WinRegistry.RegistryEntry
@@ -34,15 +35,7 @@ namespace core.WinRegistry.RegistryEntry
         /// <summary>
         /// Gets or sets the boolean value for a Windows Registry key.
         /// </summary>
-        public new bool Value
-        {
-            get => BoolValue;
-            private set
-            {
-                BoolValue = value;
-            }
-        }
-        private bool BoolValue;
+        public new bool Value { get; set; }
 
         /// <summary>
         /// Indicates whether the value is valid based on defined validation criteria.
@@ -209,7 +202,7 @@ namespace core.WinRegistry.RegistryEntry
 
         #endregion
 
-        #region Override Methods: IsValueSet
+        #region Protected Override Methods: ProtectedHasValue
 
         protected override bool ProtectedHasValue()
         {
@@ -224,22 +217,22 @@ namespace core.WinRegistry.RegistryEntry
         #region Private Methods: ConvertToBool, DetermineValueKind
 
         /// <summary>
-        /// Converts the provided string value to a boolean and updates the BoolValue property.
+        /// Converts the provided string value to a boolean and updates the Value property.
         /// </summary>
-        /// <param name="newValue">The string value to convert.</param>
+        /// <param name="value">The string value to convert.</param>
         /// <remarks>
         /// If the conversion to boolean is successful and the value is set, it updates the BoolValue property.
         /// If the conversion to boolean fails but the value is set and can be parsed as an integer, it updates the BoolValue property based on whether the integer value equals 1.
         /// If neither conversion succeeds or the value is not set, it uses the DefaultValue as the fallback value.
         /// </remarks>
-        private void ConvertToBool(string newValue)
+        private void ConvertToBool(string value)
         {
-            if (IsSet && bool.TryParse(newValue, out bool boolValue))
-                BoolValue = boolValue;
-            else if (IsSet && int.TryParse(newValue, out int intValue))
-                BoolValue = intValue == 1;
+            if (IsSet && bool.TryParse(value, out bool boolValue))
+                Value = boolValue;
+            else if (IsSet && int.TryParse(value, out int intValue))
+                Value = intValue == 1;
             else
-                BoolValue = DefaultValue;
+                Value = DefaultValue;
         }
 
         /// <summary>
@@ -251,19 +244,20 @@ namespace core.WinRegistry.RegistryEntry
         private static RegistryValueKind DetermineValueKind(string value)
         {
             string lcValue = value.ToLower();
-            if (lcValue == "true" || lcValue == "false")
+            if (ValueKindMap.TryGetValue(lcValue, out RegistryValueKind valueKind))
             {
-                return RegistryValueKind.String; //  Represent "true"/"false" as DWORD
+                return valueKind;
             }
-            else if (lcValue == "0" || lcValue == "1")
-            {
-                return RegistryValueKind.DWord; // Represent "0"/"1" as DWORD
-            }
-            else
-            {
-                throw new ArgumentException("Invalid value. Supported values are 'true', 'false', '0', and '1'.", nameof(value));
-            }
+            throw new ArgumentException("Invalid value. Supported values are 'true', 'false', '0', and '1'.", nameof(value));
         }
+
+        private static readonly Dictionary<string, RegistryValueKind> ValueKindMap = new()
+        {
+            { "true", RegistryValueKind.String },
+            { "false", RegistryValueKind.String },
+            { "0", RegistryValueKind.DWord },
+            { "1", RegistryValueKind.DWord },
+        };
 
         #endregion
     }

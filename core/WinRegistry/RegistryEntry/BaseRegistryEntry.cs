@@ -114,15 +114,7 @@ namespace core.WinRegistry.RegistryEntry
         /// <summary>
         /// Represents the value of the registry entry.
         /// </summary>
-        public virtual string Value
-        {
-            get => StoredValue;
-            set
-            {
-                StoredValue = value;
-            }
-        }
-        private string StoredValue;
+        public virtual string Value { get; set; }
 
         /// <summary>
         /// This property indicates whether the entry has been explicitly set.
@@ -353,12 +345,6 @@ namespace core.WinRegistry.RegistryEntry
         /// </summary>
         /// <returns><c>true</c> if the path is set; otherwise, <c>false</c>.</returns>
         private bool IsPathSet() => Path != null;
-
-        /// <summary>
-        /// Determines whether the name of the registry entry has been explicitly set.
-        /// </summary>
-        /// <returns><c>true</c> if the name is set; otherwise, <c>false</c>.</returns>
-        private bool IsNameSet() => Name != null;
 
         #endregion
     }

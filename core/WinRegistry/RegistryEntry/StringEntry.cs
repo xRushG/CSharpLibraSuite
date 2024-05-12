@@ -38,22 +38,8 @@ namespace core.WinRegistry.RegistryEntry
 
         #endregion
 
-        #region Public Override Property: Value, IsValid
+        #region Public Override Property: IsValid
 
-        /// <summary>
-        /// Represents the string value associated with the windows registry key.
-        /// </summary>
-        public new string Value
-        {
-            get => StringValue;
-            private set
-            {
-                StringValue = value;
-            }
-        }
-        private string StringValue;
-
-        /// <summary>
         /// Indicates whether the value is valid based on defined validation criteria.
         /// </summary>
         /// <remarks>
@@ -241,17 +227,17 @@ namespace core.WinRegistry.RegistryEntry
         /// <summary>
         /// Converts the provided string value and updates the StringValue property.
         /// </summary>
-        /// <param name="newValue">The string value to convert.</param>
+        /// <param name="value">The string value to convert.</param>
         /// <remarks>
         /// If the value is set and not null, it updates the StringValue property with the provided value.
         /// If the value is not set or null, it uses the DefaultValue as the fallback value.
         /// </remarks>
-        private void ConvertToString(string newValue)
+        private void ConvertToString(string value)
         {
-            if (IsSet && newValue != null)
-                StringValue = newValue;
+            if (IsSet && value != null)
+                Value = value;
             else
-                StringValue = DefaultValue;
+                Value = DefaultValue;
         }
 
         /// <summary>
