@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
 
-namespace core.WinRegistry
+namespace CSharpLibraSuite.WinRegistry
 {
     [SupportedOSPlatform("windows")]
     /// <summary>

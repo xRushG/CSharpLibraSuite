@@ -4,7 +4,7 @@ using System.Runtime.Versioning;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace coreTest.WinRegistryTest
+namespace CSharpLibraSuiteTest.WinRegistryTest
 {
     [SupportedOSPlatform("windows")]
     internal class WinRegistryTests : WinRegistry

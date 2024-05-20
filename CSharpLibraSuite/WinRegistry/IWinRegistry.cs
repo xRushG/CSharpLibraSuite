@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 
-namespace core.WinRegistry
+namespace CSharpLibraSuite.WinRegistry
 {
     [SupportedOSPlatform("windows")]
     public interface IWinRegistry

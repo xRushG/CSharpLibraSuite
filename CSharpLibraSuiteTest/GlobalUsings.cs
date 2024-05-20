@@ -1,8 +1,8 @@
 global using NUnit.Framework;
-global using core.WinRegistry;
+global using CSharpLibraSuite.WinRegistry;
 using Microsoft.Win32;
 
-namespace coreTest
+namespace CSharpLibraSuiteTest
 {
     public static class GlobalConstants
     {

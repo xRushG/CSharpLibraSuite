@@ -4,7 +4,7 @@ using NUnit.Framework.Internal;
 using System;
 using System.Runtime.Versioning;
 
-namespace coreTest.WinRegistryTest.RegistryEntryTest
+namespace CSharpLibraSuiteTest.WinRegistryTest.RegistryEntryTest
 {
     [SupportedOSPlatform("windows")]
     internal class IntegerEntryTest

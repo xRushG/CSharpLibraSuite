@@ -3,7 +3,7 @@ using Microsoft.Win32;
 using NUnit.Framework.Internal;
 using System.Runtime.Versioning;
 
-namespace coreTest.WinRegistryTest.RegistryEntryTest
+namespace CSharpLibraSuiteTest.WinRegistryTest.RegistryEntryTest
 {
     [SupportedOSPlatform("windows")]
     internal class BoolEntryTest
