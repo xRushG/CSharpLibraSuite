@@ -426,7 +426,7 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         /// <param name="hive">The RegistryHive value to validate.</param>
         /// <exception cref="ArgumentException">Thrown when an unknown or unsupported RegistryHive value is provided.</exception>
-        public static void ThrowIfHiveInvalid(RegistryHive Hive)
+        private static void ThrowIfHiveInvalid(RegistryHive Hive)
         {
             if (!Enum.IsDefined(typeof(RegistryHive), Hive) || Hive == RegistryHive.CurrentConfig || Hive == 0)
                 throw new ArgumentException("Invalid parameter: Unknown or unsupported RegistryHive value.", nameof(Hive));
@@ -437,7 +437,7 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         /// <param name="path">The path to validate.</param>
         /// <returns>The validated parameter path.</returns>
-        public static void ThrowIfPathInvalid(string Path)
+        private static void ThrowIfPathInvalid(string Path)
         {
             if (string.IsNullOrWhiteSpace(Path))
                 throw new ArgumentException("Invalid parameter: Path cannot be null, empty, or consist only of whitespace characters.", nameof(Path));
@@ -447,7 +447,7 @@ namespace CSharpLibraSuite.WinRegistry
         /// Throws an exception if the specified name is null or empty.
         /// </summary>
         /// <param name="name">The name to validate.</param>
-        public static void ThrowIfNameInvalid(string Name)
+        private static void ThrowIfNameInvalid(string Name)
         {
             if (Name == null)
                 throw new ArgumentNullException(nameof(Name), "Invalid parameter: Name cannot be null.");
@@ -458,7 +458,7 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         /// <param name="valueKind">The RegistryValueKind to validate.</param>
         /// <exception cref="InvalidOperationException">Thrown when the RegistryValueKind is Unknown.</exception>
-        public static void ThrowIfValueKindInvalid(RegistryValueKind ValueKind)
+        private static void ThrowIfValueKindInvalid(RegistryValueKind ValueKind)
         {
             if (!Enum.IsDefined(typeof(RegistryValueKind), ValueKind) || ValueKind == RegistryValueKind.Unknown || ValueKind == RegistryValueKind.None)
                 throw new ArgumentException("Invalid parameter: Unknown or unsupported RegistryValueKind value.", nameof(ValueKind));

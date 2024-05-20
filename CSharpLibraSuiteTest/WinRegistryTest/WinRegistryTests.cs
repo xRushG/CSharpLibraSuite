@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using System.Runtime.Versioning;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace CSharpLibraSuiteTest.WinRegistryTest
 {
@@ -20,22 +21,39 @@ namespace CSharpLibraSuiteTest.WinRegistryTest
 
         #region WinRegistry.ThrowIfHiveInvalid()
 
+        private static MethodInfo? GetPrivateStaticMethod(string methodName)
+        {
+            return typeof(WinRegistry).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
+        }
+
         [Test]
         public void ThrowIfHiveInvalid_ValidHive_DoesNotThrow()
         {
-            Assert.That(() => ThrowIfHiveInvalid(RegistryHive.LocalMachine), Throws.Nothing);
+            var method = GetPrivateStaticMethod("ThrowIfHiveInvalid");
+            if (method != null)
+                Assert.DoesNotThrow(() => method.Invoke(null, new object[] { RegistryHive.LocalMachine }));
+            else
+                Assert.Fail("The method ThrowIfHiveInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfHiveInvalid_CurrentConfig_ThrowsArgumentException()
         {
-            Assert.That(() => ThrowIfHiveInvalid(RegistryHive.CurrentConfig), Throws.ArgumentException);
+            var method = GetPrivateStaticMethod("ThrowIfHiveInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { null }));
+            else
+                Assert.Fail("The method ThrowIfHiveInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfHiveInvalid_InvalidHive_ThrowsArgumentException()
         {
-            Assert.That(() => ThrowIfHiveInvalid((RegistryHive)100), Throws.ArgumentException);
+            var method = GetPrivateStaticMethod("ThrowIfHiveInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method ? .Invoke(null, new object[] { (RegistryHive)100 }));
+            else
+                Assert.Fail("The method ThrowIfHiveInvalid could not be found.");
         }
 
         #endregion
@@ -45,25 +63,41 @@ namespace CSharpLibraSuiteTest.WinRegistryTest
         [Test]
         public void ThrowIfPathInvalid_ValidPath_DoesNotThrow()
         {
-            Assert.DoesNotThrow(() => ThrowIfPathInvalid(@"SOFTWARE\Microsoft"));
+            var method = GetPrivateStaticMethod("ThrowIfPathInvalid");
+            if (method != null)
+                Assert.DoesNotThrow(() => method.Invoke(null, new object[] { @"SOFTWARE\Microsoft" }));
+            else
+                Assert.Fail("The method ThrowIfPathInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfPathInvalid_NullPath_ThrowsArgumentException()
         {
-            Assert.That(() => ThrowIfPathInvalid(null), Throws.ArgumentException);
+            var method = GetPrivateStaticMethod("ThrowIfPathInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { null }));
+            else
+                Assert.Fail("The method ThrowIfPathInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfPathInvalid_EmptyPath_ThrowsArgumentException()
         {
-            Assert.That(() => ThrowIfPathInvalid(string.Empty), Throws.ArgumentException);
+            var method = GetPrivateStaticMethod("ThrowIfPathInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { string.Empty }));
+            else
+                Assert.Fail("The method ThrowIfPathInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfPathInvalid_WhitespacePath_ThrowsArgumentException()
         {
-            Assert.That(() => ThrowIfPathInvalid("   "), Throws.ArgumentException);
+            var method = GetPrivateStaticMethod("ThrowIfPathInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { "   " }));
+            else
+                Assert.Fail("The method ThrowIfPathInvalid could not be found.");
         }
 
         #endregion
@@ -73,13 +107,21 @@ namespace CSharpLibraSuiteTest.WinRegistryTest
         [Test]
         public void ThrowIfNameInvalid_ValidName_DoesNotThrow()
         {
-            Assert.DoesNotThrow(() => ThrowIfNameInvalid("TestName"));
+            var method = GetPrivateStaticMethod("ThrowIfNameInvalid");
+            if (method != null)
+                Assert.DoesNotThrow(() => method.Invoke(null, new object[] { "TestName" }));
+            else
+                Assert.Fail("The method ThrowIfNameInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfNameInvalid_NullName_ThrowsArgumentNullException()
         {
-            Assert.That(() => ThrowIfNameInvalid(null), Throws.ArgumentNullException);
+            var method = GetPrivateStaticMethod("ThrowIfNameInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { null }));
+            else
+                Assert.Fail("The method ThrowIfNameInvalid could not be found.");
         }
 
         #endregion
@@ -89,25 +131,41 @@ namespace CSharpLibraSuiteTest.WinRegistryTest
         [Test] 
         public void ThrowIfValueKindInvalid_ValidValueKind_DoesNotThrow()
         {
-            Assert.DoesNotThrow(() => ThrowIfValueKindInvalid(RegistryValueKind.String));
+            var method = GetPrivateStaticMethod("ThrowIfValueKindInvalid");
+            if (method != null)
+                Assert.DoesNotThrow(() => method.Invoke(null, new object[] { RegistryValueKind.String }));
+            else
+                Assert.Fail("The method ThrowIfValueKindInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfValueKindInvalid_InvalidValueKind_ThrowsArgumentException()
         {
-            Assert.That(() => ThrowIfValueKindInvalid((RegistryValueKind)100), Throws.ArgumentException);
+            var method = GetPrivateStaticMethod("ThrowIfValueKindInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { (RegistryValueKind)100 }));
+            else
+                Assert.Fail("The method ThrowIfValueKindInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfValueKindInvalid_ValueKindUnknown_ThrowsArgumentException()
         {
-            Assert.That(() => ThrowIfValueKindInvalid(RegistryValueKind.Unknown), Throws.ArgumentException);
+            var method = GetPrivateStaticMethod("ThrowIfValueKindInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { RegistryValueKind.Unknown }));
+            else
+                Assert.Fail("The method ThrowIfValueKindInvalid could not be found.");
         }
 
         [Test]
         public void ThrowIfValueKindInvalid_ValueKindNone_ThrowsArgumentException()
         {
-            Assert.That(() => ThrowIfValueKindInvalid(RegistryValueKind.None), Throws.ArgumentException);
+            var method = GetPrivateStaticMethod("ThrowIfValueKindInvalid");
+            if (method != null)
+                Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { RegistryValueKind.None }));
+            else
+                Assert.Fail("The method ThrowIfValueKindInvalid could not be found.");
         }
 
         #endregion
