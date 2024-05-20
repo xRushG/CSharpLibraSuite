@@ -13,85 +13,63 @@ namespace coreTest.WinRegistryTest.RegistryEntryTest
         private const RegistryHive TestHive = GlobalConstants.WinRegTestsRootHive;
         private const string TestPath = $"{TestRoot}\\LongIntegerEntryTest";
 
-        private BaseRegistryEntry TestEntry = new()
-        {
-            Hive = RegistryHive.CurrentUser,
-            Path = @"SOFTWARE\Microsoft",
-            Name = "Windows",
-            ValueKind = RegistryValueKind.DWord,
-            Value = "3047483647"
-        };
-
         [Test]
         public void IsValid_NoValidationSet_EntryComplete_ReturnsTrue()
         {
-            LongIntEntry entry = new(TestEntry);
+            Assert.DoesNotThrow(() => WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid", 3047483647).Write());
+            var entry = WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid").Read();
             Assert.That(entry.IsValid, Is.True);
         }
 
         [Test]
         public void IsValid_AllowedValuesSet_ValueInAllowedValues_ReturnsTrue()
         {
-            TestEntry.Value = "2147483648";
-            LongIntEntry entry = new (TestEntry);
-            entry.SetValidation(new long[] { 2147483648, 2147483649, 2147483650 });
+            Assert.DoesNotThrow(() => WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid", 2147483649).Write());
+            var entry = WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid").SetValidation(new long[] { 2147483648, 2147483649, 2147483650 }).Read();
             Assert.That(entry.IsValid, Is.True);
         }
         
         [Test]
         public void IsValid_AllowedValuesSet_ValueNotInAllowedValues_ReturnsFalse()
         {
-            TestEntry.Value = "4";
-            LongIntEntry entry = new(TestEntry);
-            entry.SetValidation(new long[] { 2147483648, 2147483649, 2147483650 });
+            Assert.DoesNotThrow(() => WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid", 4).Write());
+            var entry = WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid").SetValidation(new long[] { 2147483648, 2147483649, 2147483650 }).Read();
             Assert.That(entry.IsValid, Is.False);
         }
 
         [Test]
         public void IsValid_RangeSet_ValueInRange_ReturnsTrue()
         {
-            TestEntry.Value = "2147483650";
-            LongIntEntry entry = new(TestEntry);
-            entry.SetValidation(2147483647, 2200000000);
+            Assert.DoesNotThrow(() => WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid", 2147483652).Write());
+            var entry = WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid").SetValidation(2147483647, 2200000000).Read();
             Assert.That(entry.IsValid, Is.True);
         }
 
         [Test]
         public void IsValid_RangeSet_ValueOutOfRange_ReturnsFalse()
         {
-            TestEntry.Value = "20";
-            LongIntEntry entry = new(TestEntry);
-            entry.SetValidation(2147483647, 2200000000);
+            Assert.DoesNotThrow(() => WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid", 20).Write());
+            var entry = WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid").SetValidation(2147483647, 2200000000).Read();
             Assert.That(entry.IsValid, Is.False);
         }
 
         [Test]
         public void IsValid_InvalidValueKind_ThrowArgumentException()
         {
-            Assert.Throws<ArgumentException>(() =>
-            {
-                LongIntEntry entry = new(TestEntry.Hive, TestEntry.Path, TestEntry.Name, TestEntry.Value, RegistryValueKind.Unknown);
-            });
+            Assert.Throws<ArgumentException>(() => WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid", 5).SetValueKind(RegistryValueKind.Unknown));
         }
 
         [Test]
         public void Value_SetToNegativeNumber_ThrowArgumentException()
         {
-            TestEntry.Value = "-100";
-            Assert.Throws<ArgumentException>(() =>
-            {
-                LongIntEntry entry = new(TestEntry);
-            });
+            Assert.Throws<ArgumentException>(() => WinRegistryEntry<long>.New(TestHive, TestPath, "IsValid", -100));
         }
 
         [Test]
         public void FluentWrite_And_Read_DoesNotThrow_ReturnsLong15()
         {
-            string name = "FluentReadAndWriteTest";
-
-            Assert.DoesNotThrow(() => LongIntEntry.New(TestHive, TestPath, name, 15, RegistryValueKind.QWord).Write());
-
-            LongIntEntry entry = LongIntEntry.New(TestHive, TestPath, name, 42).Read();
+            Assert.DoesNotThrow(() => WinRegistryEntry<long>.New(TestHive, TestPath, "FluentReadAndWriteTest", 15).Write());
+            var entry = WinRegistryEntry<long>.New(TestHive, TestPath, "FluentReadAndWriteTest", 42).Read();
             Assert.That(entry.Value, Is.EqualTo(15));
         }
 

@@ -1,5 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Security;
 
@@ -7,12 +9,16 @@ namespace core.WinRegistry
 {
     [SupportedOSPlatform("windows")]
     /// <summary>
-    /// Provides functionality to interact with the Windows Registry, including reading and writing registry entries.
+    /// Provides functionality to interact with the Windows Registry, including reading, writing, and managing registry entries.
     /// </summary>
     /// <remarks>
-    /// This class encapsulates common functionality for working with the Windows Registry, such as opening registry keys, creating subkeys, and reading/writing values.
-    /// It serves as a base class for specialized registry entry classes and provides methods for working with registry keys and values in a centralized manner.
-    /// Users can create instances of this class to interact with the Windows Registry, performing operations such as reading and writing registry entries.
+    /// This class encapsulates common functionality for working with the Windows Registry. It offers methods to open registry keys, create subkeys, and read or write values.
+    /// The class serves as a base for specialized registry entry classes, centralizing registry operations and validation checks.
+    /// Users can create instances of this class to perform various registry operations, such as retrieving subkey names, reading values of different types, creating keys, and deleting registry entries or keys.
+    /// Additionally, the class includes methods for converting between different registry value types and handling custom validation rules.
+    /// 
+    /// License:
+    /// This class is licensed under MIT License.
     /// </remarks>
     public class WinRegistry : IWinRegistry, IWinRegistryRead
     {
@@ -120,6 +126,67 @@ namespace core.WinRegistry
             return DefaultValue;
         }
 
+        #endregion
+
+        #region Public Read Tree Methods
+
+        /// <summary>
+        /// Retrieves a windows registry entry for a specific registry hive, path, and value name.
+        /// </summary>
+        /// <param name="hive">The RegistryHive of the key.</param>
+        /// <param name="path">The path of the key.</param>
+        /// <param name="name">The name of the value to retrieve.</param>
+        /// <returns>A WinRegistryEntry<string> object representing the specified registry key and value.</returns>
+        public WinRegistryEntry<string> GetEntry(RegistryHive hive, string path, string name)
+        {
+            return WinRegistryEntry<string>
+                    .New(hive, path, name)
+                    .Read();
+        }
+
+        /// <summary>
+        /// Retrieves a list of registry entries and their values under a given key path.
+        /// </summary>
+        /// <param name="hive">The registry hive.</param>
+        /// <param name="path">The registry key path.</param>
+        /// <returns>A list of WinRegistryEntry<string> objects, each representing a value within the specified registry key path.</returns>
+        public List<WinRegistryEntry<string>> GetEntries(RegistryHive hive, string path)
+        {
+            using var key = RegistryKey.OpenBaseKey(hive, RegistryView.Default).OpenSubKey(path);
+            if (key == null)
+                return new List<WinRegistryEntry<string>>(); // Return an empty list when no key is found
+
+            return key.GetValueNames()
+                .Select(name => WinRegistryEntry<string>.New(hive, path, name)
+                    .Read())
+                .ToList();
+        }
+
+        /// <summary>
+        /// Recursively retrieves registry entries under a given key path and its subkeys.
+        /// </summary>
+        /// <param name="hive">The registry hive.</param>
+        /// <param name="path">The registry key path.</param>
+        /// <returns>A list of WinRegistryEntry<string> objects, each representing a value within the specified registry key path.</returns>
+        public List<WinRegistryEntry<string>> GetEntriesRecursive(RegistryHive hive, string path)
+        {
+            List<WinRegistryEntry<string>> list = new();
+            using (var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Default))
+            using (var key = baseKey.OpenSubKey(path))
+            {
+                if (key != null)
+                {
+                    foreach (string subPathName in key.GetSubKeyNames())
+                    {
+                        string subKey = $"{path}\\{subPathName}";
+                        list.AddRange(GetEntriesRecursive(hive, subKey));
+                    }
+                }
+            }
+
+            list.AddRange(GetEntries(hive, path));
+            return list;
+        }
         #endregion
 
         #region Public Write Methods

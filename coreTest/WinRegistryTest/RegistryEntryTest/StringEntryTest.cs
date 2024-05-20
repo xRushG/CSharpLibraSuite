@@ -20,76 +20,57 @@ namespace coreTest.WinRegistryTest.RegistryEntryTest
             Third = 3
         }
 
-        private BaseRegistryEntry TestEntry = new()
-        {
-            Hive = RegistryHive.CurrentUser,
-            Path = @"SOFTWARE\Microsoft",
-            Name = "Windows",
-            ValueKind = RegistryValueKind.String,
-            Value = ""
-        };
-
         [Test]
         public void IsValid_NoValidationSet_EntryComplete_ReturnsTrue()
         {
-            StringEntry entry = new(TestEntry);
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "IsValid").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid").Read();
             Assert.That(entry.IsValid, Is.True);
         }
 
         [Test]
         public void IsValid_AllowedValuesSet_ValueInAllowedValues_ReturnsTrue()
         {
-            TestEntry.Value = "Banana";
-            StringEntry entry = new (TestEntry);
-            entry.SetValidation(new string[] { "Banana", "Strawberry", "Apple" });
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "Banana").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid").SetValidation(new string[] { "Banana", "Strawberry", "Apple" }).Read();
             Assert.That(entry.IsValid, Is.True);
         }
         
         [Test]
         public void IsValid_AllowedValuesSet_ValueNotInAllowedValues_ReturnsFalse()
         {
-            TestEntry.Value = "Cheese";
-            StringEntry entry = new(TestEntry);
-            entry.SetValidation(new string[] { "Banana", "Strawberry", "Apple" });
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "Cheese").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid").SetValidation(new string[] { "Banana", "Strawberry", "Apple" }).Read();
             Assert.That(entry.IsValid, Is.False);
         }
 
         [Test]
         public void IsValid_EnumSet_ValueInEnum_ReturnsTrue()
         {
-            TestEntry.Value = "Second";
-            StringEntry entry = new(TestEntry);
-            entry.SetValidation<TestEnum>();
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "Second").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid").SetValidation<TestEnum>().Read();
             Assert.That(entry.IsValid, Is.True);
         }
 
         [Test]
         public void IsValid_EnumSet_ValueNotInEnum_ReturnsFalse()
         {
-            TestEntry.Value = "Fourth";
-            StringEntry entry = new(TestEntry);
-            entry.SetValidation<TestEnum>();
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "Fourth").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid").SetValidation<TestEnum>().Read();
             Assert.That(entry.IsValid, Is.False);
         }
 
         [Test]
         public void IsValid_InvalidValueKind_ThrowArgumentException()
         {
-            Assert.Throws<ArgumentException>(() =>
-            {
-                StringEntry entry = new(TestEntry.Hive, TestEntry.Path, TestEntry.Name, TestEntry.Value, RegistryValueKind.Unknown);
-            });
+            Assert.Throws<ArgumentException>(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "Windows").SetValueKind(RegistryValueKind.Unknown));
         }
-
 
         [Test]
         public void FluentWrite_And_Read_DoesNotThrow_ReturnsStrJustATest()
         {
-            string name = "FluentReadAndWriteTest";
-
-            Assert.DoesNotThrow(() => StringEntry.New(TestHive, TestPath, name, "JustATest", RegistryValueKind.String, "TestFailed").Write());
-
-            StringEntry entry = StringEntry.New(TestHive, TestPath, name, "TestFailed").Read();
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "FluentReadAndWriteTest", "JustATest").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "FluentReadAndWriteTest", "TestFailed").Read();
             Assert.That(entry.Value, Is.EqualTo("JustATest"));
         }
 

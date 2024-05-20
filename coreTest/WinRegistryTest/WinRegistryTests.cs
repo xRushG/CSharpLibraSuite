@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.Win32;
 using System.Runtime.Versioning;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace coreTest.WinRegistryTest
 {
@@ -391,6 +393,114 @@ namespace coreTest.WinRegistryTest
 
             var key = GetIntegerValue(TestHive, testPath, testName, 12); // set default to true
             Assert.That(key, Is.TypeOf<int>().And.EqualTo(12));
+        }
+
+        #endregion
+
+        #region WinRegistry.GetEntry()
+
+        [Test]
+        public void GetRegistryEntry_ReturnsCorrectEntry()
+        {
+            const string testName = "TestValue";
+            const int testValue = 2011;
+            const string testPath = TestPath + @"\GetRegistryEntry";
+            Assert.DoesNotThrow(() => SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.DWord));
+
+            var entry = GetEntry(TestHive, testPath, testName);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(entry.Hive, Is.EqualTo(TestHive));
+                Assert.That(entry.Path, Is.EqualTo(testPath));
+                Assert.That(entry.Name, Is.EqualTo(testName));
+                Assert.That(entry.ValueKind, Is.EqualTo(RegistryValueKind.DWord));
+                Assert.That(entry.IsSet, Is.EqualTo(true));
+            });
+        }
+
+        #endregion
+
+        #region WinRegistryEC.GetRegistryEntries() 
+
+        [Test]
+        public void GetRegistryEntries_ReturnsCorrectEntries()
+        {
+            const string testPath = TestPath + @"\GetRegistryEntries";
+            const string testNamePrefix = "TestEntry";
+            const string testValue = "winRegEntriesTest";
+
+            for (int i = 1; i <= 10; i++)
+            {
+                string testName = $"{testNamePrefix}{i}";
+                Assert.DoesNotThrow(() => SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.String));
+            }
+
+            const string testPathSubkeys = testPath + @"\Subkey";
+            const string testNameSubKey = "TestSubEntry";
+            Assert.DoesNotThrow(() => SetValue(TestHive, testPathSubkeys, testNameSubKey, testValue, RegistryValueKind.String));
+
+            var entries = GetEntries(TestHive, testPath);
+
+
+            Assert.That(entries, Is.Not.Null);
+            Assert.That(entries, Is.Not.Empty);
+            Assert.That(entries, Is.InstanceOf<List<WinRegistryEntry<string>>>());
+
+            foreach (var entry in entries)
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(entry.Name, Is.Not.Null & Is.Not.EqualTo(testNameSubKey)); //Subkeys should not be read (non-recursive).
+
+                    Assert.That(entry.Hive, Is.EqualTo(TestHive));
+                    Assert.That(entry.Path, Is.EqualTo(testPath));
+                    Assert.That(entry.Value, Is.EqualTo(testValue));
+                    Assert.That(entry.ValueKind, Is.EqualTo(RegistryValueKind.String));
+                });
+            }
+        }
+
+        #endregion
+
+        #region WinRegistryEC.GetRegistryEntriesRecursive()
+
+        [Test]
+        public void GetRegistryEntriesRecursive_ReturnsCorrectEntries()
+        {
+            const string testPath = TestPath + @"\GetRegistryEntriesRecursive";
+            const string testNamePrefix = "TestEntry";
+            const string testValue = "winRegEntriesTest";
+
+            for (int i = 1; i <= 10; i++)
+            {
+                string testName = $"{testNamePrefix}{i}";
+                Assert.DoesNotThrow(() => SetValue(TestHive, testPath, testName, testValue, RegistryValueKind.String));
+            }
+
+            const string testSubkeyPath = testPath + @"\Subkey";
+            const string testNameSubKey = "TestSubEntry";
+            Assert.DoesNotThrow(() => SetValue(TestHive, testSubkeyPath, testNameSubKey, testValue, RegistryValueKind.String));
+
+            var entries = GetEntriesRecursive(TestHive, testPath);
+
+            Assert.That(entries, Is.Not.Null);
+            Assert.That(entries, Is.Not.Empty);
+            Assert.That(entries, Is.InstanceOf<List< WinRegistryEntry<string>>> ());
+
+            // Assert that the subkey is included in the entries list
+            Assert.That(entries.Any(e => e.Name == testNameSubKey), Is.True, "Subkey entry should be included in the entries list.");
+
+            foreach (var entry in entries)
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(entry.Name, Is.Not.Null);
+                    Assert.That(entry.Hive, Is.EqualTo(TestHive));
+                    Assert.That(entry.Value, Is.EqualTo(testValue));
+                    Assert.That(entry.ValueKind, Is.EqualTo(RegistryValueKind.String));
+                });
+            }
         }
 
         #endregion
