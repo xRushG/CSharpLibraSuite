@@ -295,13 +295,25 @@ namespace CSharpLibraSuiteTest.WinRegistryTest
         }
 
         [Test]
-        public void GeValue_NonExistingValue_ReturnsNull()
+        public void GetValue_NonExistingValue_ReturnsNull()
         {
             const string testPath = TestPath + @"\GetValue";
             const string nonExistingName = "NonExistingValue";
 
             string key = GetValue(TestHive, testPath, nonExistingName);
             Assert.That(key, Is.Null);
+        }
+
+        [Test]
+        public void SetAndGetDefaultValue_RetrieveValue_ReturnsValue()
+        {
+            const string testPath = TestPath + @"\DefautValue";
+            const string testValue = "DefaultTestTestValue";
+
+            Assert.DoesNotThrow(() => SetDefaultValue(TestHive, testPath, testValue));
+
+            string key = GetDefaultValue(TestHive, testPath);
+            Assert.That(key, Is.EqualTo(testValue));
         }
 
         #endregion

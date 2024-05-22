@@ -52,9 +52,9 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         /// <param name="Hive">The registry hive.</param>
         /// <param name="Path">The registry key path.</param>
-        /// <param name="Name">The name of the value. Null or Empty to get default.</param>
+        /// <param name="Name">The name of the value. Null or empty to get the default value.</param>
         /// <returns>The value data as a string, or null if the value is not found.</returns>
-        /// <exception cref = "ArgumentException" > Thrown when the specified registry hive, path or name is invalid</exception>
+        /// <exception cref="ArgumentException">Thrown when the specified registry hive or path is invalid.</exception>
         public string GetValue(RegistryHive Hive, string Path, string Name)
         {
             ThrowIfHiveInvalid(Hive);
@@ -69,6 +69,17 @@ namespace CSharpLibraSuite.WinRegistry
                 Name = null;
 
             return key.GetValue(Name)?.ToString();
+        }
+
+        /// <summary>
+        /// Retrieves the data value associated with the specified registry key and uses the default value if the value name is not specified.
+        /// </summary>
+        /// <param name="Hive">The registry hive.</param>
+        /// <param name="Path">The registry key path.</param>
+        /// <returns>The value data as a string, or null if the value is not found.</returns>
+        public string GetDefaultValue(RegistryHive Hive, string Path)
+        {
+            return GetValue(Hive, Path, null);
         }
 
         /// <summary>
@@ -196,10 +207,10 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         /// <param name="Hive">The registry hive.</param>
         /// <param name="Path">The registry key path.</param>
-        /// <param name="Name">The name of the value.</param>
+        /// <param name="Name">The name of the value. Null or empty to set the default value.</param>
         /// <param name="Value">The value to set for the property.</param>
         /// <param name="ValueKind">The data type of the value to set.</param>
-        /// <exception cref="ArgumentException">Thrown when the specified registry hive, path, name or valuekind is invalid</exception>
+        /// <exception cref="ArgumentException">Thrown when the specified registry hive, path, name or value kind is invalid.</exception>
         /// <exception cref="InvalidOperationException">Thrown when an error occurs while writing to the Windows Registry key.</exception>
         public void SetValue(RegistryHive Hive, string Path, string Name, object Value, RegistryValueKind ValueKind)
         {
@@ -222,6 +233,19 @@ namespace CSharpLibraSuite.WinRegistry
             {
                 throw new InvalidOperationException("Error writing to the Windows Registry.", ex);
             }
+        }
+
+        /// <summary>
+        /// Sets the default value of a registry key to the specified string value.
+        /// </summary>
+        /// <param name="Hive">The registry hive.</param>
+        /// <param name="Path">The registry key path.</param>
+        /// <param name="Value">The value to set for the default property.</param>
+        /// <exception cref="ArgumentException">Thrown when the specified registry hive or path is invalid.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when an error occurs while writing to the Windows Registry key.</exception>
+        public void SetDefaultValue(RegistryHive Hive, string Path, string Value)
+        {
+            SetValue(Hive, Path, null, Value, RegistryValueKind.String);
         }
 
         /// <summary>
@@ -463,6 +487,7 @@ namespace CSharpLibraSuite.WinRegistry
             if (!Enum.IsDefined(typeof(RegistryValueKind), ValueKind) || ValueKind == RegistryValueKind.Unknown || ValueKind == RegistryValueKind.None)
                 throw new ArgumentException("Invalid parameter: Unknown or unsupported RegistryValueKind value.", nameof(ValueKind));
         }
+
         #endregion
     }
 }
