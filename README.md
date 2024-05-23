@@ -5,14 +5,22 @@ If you find any issues, please report them or feel free to create a pull request
 
 
 ## Library "WinRegistry"
-The WinRegistry provides a set of functionalities for interacting with the Windows registry, a hierarchical database used to store configuration settings and options for the operating system, software applications, and user preferences on Microsoft Windows operating systems.
+The WinRegistry library provides functionalities for interacting with the Windows registry, a hierarchical database used to store configuration settings and options for the operating system, software applications, and user preferences on Microsoft Windows.
 
-Key features of the WinRegistry extension include:
-1) Registry Access: It enables reading from and writing to the Windows registry, allowing users to retrieve and modify registry keys, subkeys, and values.
-2) Registry Entry Representation: The extension provides classes such as Entry to represent individual registry entries, encapsulating properties like registry hive, path, name, value, and value kind.
-3) Type-Safe Operations: WinRegistry facilitates type-safe operations by providing methods to handle various data types supported by the Windows registry, such as strings, integers, booleans.
+### Key Features
+Helper Class: WinRegistry
 
-Overall, the WinRegistry library from CSharpLibraSuite simplifies the process of working with the Windows registry, offering a convenient and robust solution for managing registry settings and configurations in Windows-based applications and systems.
+- Simplifies reading from and writing to the Windows registry.
+- Allows users to retrieve and modify registry keys, subkeys, and values.
+- Provides methods to handle various data types supported by the Windows registry, such as strings, integers, and booleans.
+
+Generic Class: WinRegistryEntry\<T\>
+
+- Represents individual registry entries.
+- Encapsulates properties like registry hive, path, name, value, and value kind.
+- Offers validation and fluent operations for registry entries.
+
+Overall, the WinRegistry library from CSharpLibraSuite simplifies working with the Windows registry, offering a convenient and robust solution for managing registry settings and configurations in Windows-based applications and systems.
 
 
 # Disclaimer: Usage and copy of Library
