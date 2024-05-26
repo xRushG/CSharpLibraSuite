@@ -382,15 +382,16 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         /// <param name="allowedValues">The array of allowed values.</param>
         /// <param name="caseSensitive">Flag indicating whether the validation should be case sensitive (default: false).</param>
-        public WinRegistryEntry<T> SetValidation(string[] allowedValues, bool caseSensitive = false)
+        public WinRegistryEntry<T> SetValidation(T[] allowedValues, bool caseSensitive = false)
         {
             ResetValidationRules();
 
             if (allowedValues != null && allowedValues.Length > 0)
             {
-                AllowedValues = (T[])(object)allowedValues;
+                AllowedValues = allowedValues;
                 CaseSensitive = caseSensitive;
             }
+
             return this;
         }
 
@@ -400,16 +401,8 @@ namespace CSharpLibraSuite.WinRegistry
         /// <param name="allowedValues">The array of allowed integer values.</param>
         public WinRegistryEntry<T> SetValidation(int[] allowedValues)
         {
-            ResetValidationRules();
-
-            if (allowedValues == null || allowedValues.Length == 0)
-                AllowedValues = null;
-            else if (allowedValues.Any(value => value < 0))
-                throw new ArgumentException("Negative value not allowed for REG_DWORD parameter.", nameof(allowedValues));
-            else
-                AllowedValues = (T[])(object)allowedValues;
-
-            return this;
+            T[] mappedValues = allowedValues?.Select(value => (T)(object)value).ToArray();
+            return SetValidation(mappedValues, false);
         }
 
         /// <summary>
@@ -418,16 +411,8 @@ namespace CSharpLibraSuite.WinRegistry
         /// <param name="allowedValues">The array of allowed integer values.</param>
         public WinRegistryEntry<T> SetValidation(long[] allowedValues)
         {
-            ResetValidationRules();
-
-            if (allowedValues == null || allowedValues.Length == 0)
-                AllowedValues = null;
-            else if (allowedValues.Any(value => value < 0))
-                throw new ArgumentException("Negative value not allowed for REG_QWORD parameter.", nameof(allowedValues));
-            else
-                AllowedValues = (T[])(object)allowedValues;
-
-            return this;
+            T[] mappedValues = allowedValues?.Select(value => (T)(object)value).ToArray();
+            return SetValidation(mappedValues, false);
         }
 
         #endregion
@@ -441,12 +426,8 @@ namespace CSharpLibraSuite.WinRegistry
         /// <param name="maxValue">The maximum value of the range.</param>
         public WinRegistryEntry<T> SetValidation(int minValue, int maxValue)
         {
-            if (minValue < 0)
-                throw new ArgumentException("Negative value not allowed for REG_DWORD parameter.", nameof(minValue));
-            else if (maxValue < 0)
-                throw new ArgumentException("Negative value not allowed for REG_DWORD parameter.", nameof(maxValue));
-            else if (minValue > maxValue)
-                throw new ArgumentException("MinValue must be less than or equal to MaxValue.");
+            ValidateRange(minValue, maxValue);
+            ResetValidationRules();
 
             MinInt32Value = minValue;
             MaxInt32Value = maxValue;
@@ -461,17 +442,37 @@ namespace CSharpLibraSuite.WinRegistry
         /// <param name="maxValue">The maximum value of the range.</param>
         public WinRegistryEntry<T> SetValidation(long minValue, long maxValue)
         {
-            if (minValue < 0)
-                throw new ArgumentException("Negative value not allowed for REG_QWORD parameter.", nameof(minValue));
-            else if (maxValue < 0)
-                throw new ArgumentException("Negative value not allowed for REG_QWORD parameter.", nameof(maxValue));
-            else if (minValue > maxValue)
-                throw new ArgumentException("MinValue must be less than or equal to MaxValue.");
+            ValidateRange(minValue, maxValue);
+            ResetValidationRules();
 
             MinInt64Value = minValue;
             MaxInt64Value = maxValue;
 
             return this;
+        }
+
+        /// <summary>
+        /// Private method to validate the range values.
+        /// </summary>
+        /// <typeparam name="U">The type of the values being validated.</typeparam>
+        /// <param name="minValue">The minimum value of the range.</param>
+        /// <param name="maxValue">The maximum value of the range.</param>
+        /// <param name="type">The type of registry entry (used for error messages).</param>
+        private static void ValidateRange<U>(U minValue, U maxValue) where U : IComparable<U>
+        {
+            TypeCode typeCode = Type.GetTypeCode(typeof(U));
+
+            string type = 
+                typeCode == TypeCode.Int32 ? "dword" : 
+                typeCode == TypeCode.Int64 ? "qword" 
+                : throw new ArgumentException("Registry entry type must be either Int32 or Int64 to use this validation.");
+
+            if (minValue.CompareTo(default(U)) < 0)
+                throw new ArgumentException($"Negative value not allowed for {type} parameter.", nameof(minValue));
+            if (maxValue.CompareTo(default(U)) < 0)
+                throw new ArgumentException($"Negative value not allowed for {type} parameter.", nameof(maxValue));
+            if (minValue.CompareTo(maxValue) > 0)
+                throw new ArgumentException("MinValue must be less than or equal to MaxValue.");
         }
 
         #endregion
@@ -485,6 +486,8 @@ namespace CSharpLibraSuite.WinRegistry
         /// <param name="caseSensitive">Flag indicating whether the validation should be case sensitive for strings (default: false).</param>
         public WinRegistryEntry<T> SetValidation<TEnum>(bool caseSensitive = false) where TEnum : Enum
         {
+            ResetValidationRules();
+
             CaseSensitive = caseSensitive;
 
             Type enumType = typeof(TEnum);
