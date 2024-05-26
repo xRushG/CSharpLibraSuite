@@ -129,25 +129,6 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         public bool IsValid => CheckIsValid();
 
-        /// <summary>
-        /// Represents a default value for the value property
-        /// </summary>
-        public T DefaultValue
-        {
-            get { return privateDefaultValue; }
-            set
-            {
-                ValueValidationRules(value);
-                privateDefaultValue = value;
-            }
-        }
-        private T privateDefaultValue = InitialDefaultValue();
-
-        /// <summary>
-        /// Gets a value indicating whether this entry is using its default value.
-        /// </summary>
-        public bool IsDefault { get;  private set; }
-
         #endregion
 
         #region Private Validation Properties
@@ -310,16 +291,6 @@ namespace CSharpLibraSuite.WinRegistry
         public WinRegistryEntry<T> SetValueKind(RegistryValueKind valueKind)
         {
             ValueKind = ValueKindValidationRule(valueKind);
-            return this;
-        }
-
-        /// <summary>
-        /// Sets the default value for the registry entry.
-        /// </summary>
-        /// <param name="defaultValue">The default value to be set.</param>
-        public virtual WinRegistryEntry<T> SetDefaultValue(T defaultValue)
-        {
-            DefaultValue = defaultValue;
             return this;
         }
 
@@ -489,7 +460,6 @@ namespace CSharpLibraSuite.WinRegistry
             ResetValidationRules();
 
             CaseSensitive = caseSensitive;
-
             Type enumType = typeof(TEnum);
             if (enumType != null)
                 EnumType = enumType;
@@ -569,7 +539,11 @@ namespace CSharpLibraSuite.WinRegistry
                 throw new InvalidOperationException("Error reading the Windows Registry.", ex);
             }
 
-            privateValue = ConvertValueBasedOnType(rawValue);
+            if (string.IsNullOrEmpty(rawValue))
+                return;
+
+
+            Value = ConvertValueBasedOnType(rawValue);
         }
 
         /// <summary>
@@ -619,12 +593,6 @@ namespace CSharpLibraSuite.WinRegistry
         /// <exception cref="FormatException">Thrown when the format of the value is invalid for the specified type <typeparamref name="T"/>.</exception>
         private T ConvertValueBasedOnType(string originalValue)
         {
-            if (string.IsNullOrEmpty(originalValue))
-            {
-                IsDefault = true;
-                return DefaultValue;
-            }
-
             try
             {
                 switch (Type.GetTypeCode(typeof(T)))
@@ -658,9 +626,7 @@ namespace CSharpLibraSuite.WinRegistry
                 throw new FormatException($"Invalid format for value '{originalValue}' when converting to type '{typeof(T)}'.");
             }
 
-            // If conversion fails or no appropriate case is found, set default value
-            IsDefault = true;
-            return DefaultValue;
+            throw new InvalidOperationException($"Conversion for '{typeof(T)}' failed.");
         }
 
         #endregion
@@ -860,9 +826,6 @@ namespace CSharpLibraSuite.WinRegistry
         private bool CheckIsValid()
         {
             if (RawValue == null)
-                return false;
-
-            if (IsDefault)
                 return false;
 
             switch (Type.GetTypeCode(typeof(T)))

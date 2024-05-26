@@ -24,7 +24,11 @@ namespace CSharpLibraSuiteTest.WinRegistryTest.RegistryEntryTest
         public void StringFalse_SuccessfulToBool_ReturnsFalse()
         {
             Assert.DoesNotThrow(() => WinRegistryEntry<bool>.New(TestHive, TestPath, "IsFalseString", false).Write());
-            var entry = WinRegistryEntry<bool>.New(TestHive, TestPath, "IsFalseString").SetDefaultValue(true).Read();
+
+            var entry = WinRegistryEntry<bool>.New(TestHive, TestPath, "IsFalseString");
+            entry.Value = true; // change Value to true to ensure a value was readed
+            entry.Read();
+
             Assert.That(entry.Value, Is.False);
         }
 
@@ -40,7 +44,9 @@ namespace CSharpLibraSuiteTest.WinRegistryTest.RegistryEntryTest
         public void DWordFalse_SuccessfulToBool_ReturnsFalse()
         {
             Assert.DoesNotThrow(() => WinRegistryEntry<bool>.New(TestHive, TestPath, "IsFalseDword", false).SetValueKind(RegistryValueKind.DWord).Write());
-            var entry = WinRegistryEntry<bool>.New(TestHive, TestPath, "IsFalseDword").SetDefaultValue(true).Read();
+            var entry = WinRegistryEntry<bool>.New(TestHive, TestPath, "IsFalseDword");
+            entry.Value = true; // change Value to true to ensure a value was readed
+            entry.Read();
             Assert.That(entry.Value, Is.False);
         }
 
