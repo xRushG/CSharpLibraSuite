@@ -61,6 +61,30 @@ namespace CSharpLibraSuiteTest.WinRegistryTest.RegistryEntryTest
         }
 
         [Test]
+        public void IsValid_RangeSet_Value0_ValueOutOfRange_ReturnsTrue()
+        {
+            Assert.DoesNotThrow(() => WinRegistryEntry<int>.New(TestHive, TestPath, "IsValidZero", 0).Write());
+            var entry = WinRegistryEntry<int>.New(TestHive, TestPath, "IsValidZero").SetValidation(0, 10).Read();
+            Assert.That(entry.IsValid, Is.True);
+        }
+
+        [Test]
+        public void IsValid_RangeSet_DefaultMin_ValueInRange_ReturnsTrue()
+        {
+            Assert.DoesNotThrow(() => WinRegistryEntry<int>.New(TestHive, TestPath, "IsValidDefMin", 10).Write());
+            var entry = WinRegistryEntry<int>.New(TestHive, TestPath, "IsValidDefMin").SetValidation("*", "10").Read();
+            Assert.That(entry.IsValid, Is.True);
+        }
+
+        [Test]
+        public void IsValid_RangeSet_DefaultMax_ValueInRange_ReturnsTrue()
+        {
+            Assert.DoesNotThrow(() => WinRegistryEntry<int>.New(TestHive, TestPath, "IsValidDefMax", 1000).Write());
+            var entry = WinRegistryEntry<int>.New(TestHive, TestPath, "IsValidDefMax").SetValidation("50", "*").Read();
+            Assert.That(entry.IsValid, Is.True);
+        }
+
+        [Test]
         public void IsValid_EnumSet_ValueInEnum_ReturnsTrue()
         {
             Assert.DoesNotThrow(() => WinRegistryEntry<int>.New(TestHive, TestPath, "IsValid", 2).Write());

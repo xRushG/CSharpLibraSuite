@@ -423,6 +423,52 @@ namespace CSharpLibraSuite.WinRegistry
         }
 
         /// <summary>
+        /// Sets up validation rules for a range of Int32, Int64 values.
+        /// </summary>
+        /// <param name="minValue">The minimum value of the range. "*" can be provided to indicate no minimum value.</param>
+        /// <param name="maxValue">The maximum value of the range. "*" can be provided to indicate no maximum value.</param>
+        /// <returns>The current instance of the WinRegistryEntry<T> class.</returns>
+        /// <exception cref="ArgumentException">Thrown when the registry entry type is not a valid Int32 or Int64.</exception>
+        /// <exception cref="ArgumentException">Thrown when an invalid minimum value is provided for Int32 or Int64.</exception>
+        /// <exception cref="ArgumentException">Thrown when an invalid maximum value is provided for Int32 or Int64.</exception>
+
+        public WinRegistryEntry<T> SetValidation(string minValue, string maxValue)
+        {
+            TypeCode typeCode = Type.GetTypeCode(typeof(T));
+
+            if (string.IsNullOrEmpty(minValue) || minValue == "*")
+                minValue = "0";
+            if ((string.IsNullOrEmpty(maxValue) || maxValue == "*"))
+                maxValue = (typeCode == TypeCode.Int32) 
+                    ? Int32.MaxValue.ToString() 
+                    : Int64.MaxValue.ToString();
+
+            if (typeCode == TypeCode.Int32)
+            {
+                if (!int.TryParse(minValue, out int minIntValue))
+                    throw new ArgumentException("Invalid minimum value for Int32.");
+                if (!int.TryParse(maxValue, out int maxIntValue))
+                    throw new ArgumentException("Invalid maximum value for Int32.");
+
+                return SetValidation(minIntValue, maxIntValue);
+            }
+            else if (typeCode == TypeCode.Int64)
+            {
+                if (!long.TryParse(minValue, out long minLongValue))
+                    throw new ArgumentException("Invalid minimum value for Int64.");
+                if (!long.TryParse(maxValue, out long maxLongValue))
+                    throw new ArgumentException("Invalid maximum value for Int64.");
+
+                return SetValidation(minLongValue, maxLongValue);
+            }
+            else
+            {
+                throw new ArgumentException("Registry entry type must be either a valid Int32 or Int64 to use this validation.");
+            }
+        }
+
+
+        /// <summary>
         /// Private method to validate the range values.
         /// </summary>
         /// <typeparam name="U">The type of the values being validated.</typeparam>
