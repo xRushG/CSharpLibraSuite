@@ -52,7 +52,7 @@ namespace CSharpLibraSuite.WinRegistry
         /// <summary>
         /// Represents the registry hive associated with the registry key.
         /// </summary>
-        /// /// <remarks>
+        /// <remarks>
         /// The default value is <see cref="RegistryHive.CurrentUser"/>.
         /// </remarks>
         public RegistryHive Hive
@@ -102,8 +102,7 @@ namespace CSharpLibraSuite.WinRegistry
             get { return privateValue; }
             set
             {
-                ValueValidationRules(value);
-                privateValue = value;
+                privateValue = ValueValidationRules(value);
             }
         }
         private T privateValue;
@@ -115,13 +114,13 @@ namespace CSharpLibraSuite.WinRegistry
         /// <summary>
         /// Represents the raw value retrieved directly from the registry.
         /// </summary>
-        public string RawValue { get; private set; }
+        private string RawValue;
 
         /// <summary>
         /// Gets a value indicating whether the entry has been explicitly set in the registry.
         /// This check is faster as it only verifies if a value was readed (set in registry).
         /// </summary>
-        public bool IsSet => RawValue != null;
+        public bool IsSet => IsEntrySet();
 
         /// <summary>
         /// Gets a value indicating whether the entry's value is valid according to custom validation rules.
@@ -129,12 +128,31 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         public bool IsValid => CheckIsValid();
 
+        /// <summary>
+        /// Represents the type of the generic parameter T.
+        /// </summary>
+        private readonly Type ElementType = typeof(T);
+
+        /// <summary>
+        /// Indicates whether the reading operation for the registry value was successful.
+        /// </summary>
+        private bool ReadOperationSucceeded;
+
+        /// <summary>
+        /// Indicates whether a lock operation should be performed after a successful read operation.
+        /// </summary>
+        private bool DoLock;
+
+        /// <summary>
+        /// Indicates whether the WinRegistryEntry is currently locked, preventing further read operations.
+        /// </summary>
+        public bool IsLocked { get; private set; }
+
         #endregion
 
         #region Private Validation Properties
 
         private T[] AllowedValues;
-        private bool CaseSensitive;
         private int? MinInt32Value;
         private int? MaxInt32Value;
         private long? MinInt64Value;
@@ -287,30 +305,107 @@ namespace CSharpLibraSuite.WinRegistry
         /// Sets the kind of the registry value, ensuring it is a valid and defined <see cref="RegistryValueKind"/>.
         /// </summary>
         /// <param name="valueKind">The registry value kind to set.</param>
-        /// <returns>A new instance of the Entry class.</returns>
+        /// <returns>The current instance of <see cref="WinRegistryEntry{T}"/> to allow for method chaining.</returns>
         public WinRegistryEntry<T> SetValueKind(RegistryValueKind valueKind)
         {
-            ValueKind = ValueKindValidationRule(valueKind);
+            if (ValueKindValidationRule(valueKind))
+                ValueKind = valueKind;
+            else
+                // Validation rule returned false, so the initial value will be used for the specified system type.
+                // Nothing will be changed
+                LogError("ValueKind is not valid and cannot be set."); 
+
             return this;
         }
 
         /// <summary>
         /// Reads the value of the registry entry from the specified registry path and assigns it to the Value property.
         /// </summary>
+        /// <returns>The current instance of <see cref="WinRegistryEntry{T}"/> to allow for method chaining.</returns>
         public WinRegistryEntry<T> Read()
         {
-            ReadRegistry();
+            if (IsLocked)
+                throw new InvalidOperationException("Operation denied: Cannot read registry entry again. Lock is enabled.");
+
+            if (!IsReadable())
+                throw new InvalidOperationException("Unable to read registry key. Hive, path, and name are required.");
+
+            string rawValue = null;
+            string name = string.IsNullOrEmpty(Name) ? null : Name;
+
+            try
+            {
+                using var key = RegistryKey.OpenBaseKey(Hive, RegistryView.Default).OpenSubKey(Path);
+                if (key != null)
+                    RawValue = rawValue = key.GetValue(name)?.ToString();
+
+                if (rawValue != null)
+                    ValueKind = key.GetValueKind(name);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Error reading the Windows Registry.", ex);
+            }
+
+            if (string.IsNullOrEmpty(rawValue))
+            {
+                // Issue in Windows registry: Value was null or empty.
+                string logName = string.IsNullOrEmpty(Name) ? "Default Value" : Name;
+                LogInfo($"Value for {logName} is Null or Empty");
+            }
+            else if (!ValueKindValidationRule(ValueKind))
+            {
+                // Issue in Windows registry: Value kind of the value cannot be parsed to type T.
+                LogError($"Cannot parse a Value of type {ValueKind} to the specified type {typeof(T).FullName}.");
+            }
+            else
+            {
+                Value = ConvertValueBasedOnType(rawValue);
+                ReadOperationSucceeded = true;
+
+                if (DoLock)
+                    IsLocked = true;
+            }
+
             return this;
         }
 
         /// <summary>
         /// Writes the value of the registry entry to the specified registry path.
-        /// <returns>The current instance of <see cref="WinRegistryEntry{T}"/> to allow for method chaining.</returns>
         /// </summary>
-
+        /// <returns>The current instance of <see cref="WinRegistryEntry{T}"/> to allow for method chaining.</returns>
         public WinRegistryEntry<T> Write()
         {
-            WriteRegistry();
+            if (!IsWritable())
+                throw new InvalidOperationException("Unable to write registry key. Hive, path, name, value kind, and value are required.");
+
+            string name = string.IsNullOrEmpty(Name) ? null : Name;
+            RegistryValueKind valueKind = string.IsNullOrEmpty(Name) ? RegistryValueKind.String : ValueKind;
+
+            string value;
+            if (typeof(T) == typeof(bool))
+            {
+                value = (bool)(object)Value
+                    ? ValueKind == RegistryValueKind.DWord ? "1" : "True"
+                    : ValueKind == RegistryValueKind.DWord ? "0" : "False";
+            }
+            else
+            {
+                value = Value.ToString();
+            }
+
+            try
+            {
+                using RegistryKey baseKey = RegistryKey.OpenBaseKey(Hive, RegistryView.Default);
+                using RegistryKey registryKey = baseKey.CreateSubKey(Path, true);
+
+                registryKey.SetValue(name, value, valueKind);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Error writing to the Windows Registry.", ex);
+            }
+
             return this;
         }
 
@@ -319,15 +414,27 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         /// <param name="newValue">The new value to be written to the registry entry.</param>
         /// <returns>The current instance of <see cref="WinRegistryEntry{T}"/> to allow for method chaining.</returns>
-        /// <remarks>
-        /// This method updates the value of the registry entry and writes the new value to the registry.
-        /// </remarks>
         public WinRegistryEntry<T> Write(T newValue)
         {
             Value = newValue;
             return Write();
         }
 
+        /// <summary>
+        /// Locks the WinRegistryEntry to prevent further read operations.
+        /// If a read operation has already succeeded, the entry is immediately locked.
+        /// If no read operation has been performed yet, a flag indicating the intention to lock after a successful read operation is set.
+        /// </summary>
+        /// /// <returns>The current instance of <see cref="WinRegistryEntry{T}"/> to allow for method chaining.</returns>
+        public WinRegistryEntry<T> Lock()
+        {
+            if (ReadOperationSucceeded)
+                IsLocked = true;
+            else
+                DoLock = true;
+
+            return this;
+        }
 
         #endregion
 
@@ -336,12 +443,14 @@ namespace CSharpLibraSuite.WinRegistry
         /******************************************
          * Methods be unified but for less redability its not done! 
             * Public Validation Mehtods
-            *      SetValidation(string[] allowedValues, bool caseSensitive = false)
+            *      SetValidation(T[] allowedValues)
             *      SetValidation(int[] allowedValues)
             *      SetValidation(long[] allowedValues)
+            *
             *      
             *      SetValidation(int minValue, int maxValue)
             *      SetValidation(long minValue, long maxValue)
+            *      SetValidation(string minValue, string maxValue)
             *      
             *      SetValidation<TEnum>(bool caseSensitive = false) where TEnum : Enum
         *******************************************/
@@ -352,15 +461,13 @@ namespace CSharpLibraSuite.WinRegistry
         /// Sets the allowed values for validation, with an option for case sensitivity.
         /// </summary>
         /// <param name="allowedValues">The array of allowed values.</param>
-        /// <param name="caseSensitive">Flag indicating whether the validation should be case sensitive (default: false).</param>
-        public WinRegistryEntry<T> SetValidation(T[] allowedValues, bool caseSensitive = false)
+        public WinRegistryEntry<T> SetValidation(T[] allowedValues)
         {
             ResetValidationRules();
 
             if (allowedValues != null && allowedValues.Length > 0)
             {
                 AllowedValues = allowedValues;
-                CaseSensitive = caseSensitive;
             }
 
             return this;
@@ -373,7 +480,7 @@ namespace CSharpLibraSuite.WinRegistry
         public WinRegistryEntry<T> SetValidation(int[] allowedValues)
         {
             T[] mappedValues = allowedValues?.Select(value => (T)(object)value).ToArray();
-            return SetValidation(mappedValues, false);
+            return SetValidation(mappedValues);
         }
 
         /// <summary>
@@ -383,7 +490,7 @@ namespace CSharpLibraSuite.WinRegistry
         public WinRegistryEntry<T> SetValidation(long[] allowedValues)
         {
             T[] mappedValues = allowedValues?.Select(value => (T)(object)value).ToArray();
-            return SetValidation(mappedValues, false);
+            return SetValidation(mappedValues);
         }
 
         #endregion
@@ -434,16 +541,14 @@ namespace CSharpLibraSuite.WinRegistry
 
         public WinRegistryEntry<T> SetValidation(string minValue, string maxValue)
         {
-            TypeCode typeCode = Type.GetTypeCode(typeof(T));
-
             if (string.IsNullOrEmpty(minValue) || minValue == "*")
                 minValue = "0";
             if ((string.IsNullOrEmpty(maxValue) || maxValue == "*"))
-                maxValue = (typeCode == TypeCode.Int32) 
+                maxValue = (ElementType == typeof(int)) 
                     ? Int32.MaxValue.ToString() 
                     : Int64.MaxValue.ToString();
 
-            if (typeCode == TypeCode.Int32)
+            if (ElementType == typeof(int))
             {
                 if (!int.TryParse(minValue, out int minIntValue))
                     throw new ArgumentException("Invalid minimum value for Int32.");
@@ -452,7 +557,7 @@ namespace CSharpLibraSuite.WinRegistry
 
                 return SetValidation(minIntValue, maxIntValue);
             }
-            else if (typeCode == TypeCode.Int64)
+            else if (ElementType == typeof(long))
             {
                 if (!long.TryParse(minValue, out long minLongValue))
                     throw new ArgumentException("Invalid minimum value for Int64.");
@@ -477,11 +582,11 @@ namespace CSharpLibraSuite.WinRegistry
         /// <param name="type">The type of registry entry (used for error messages).</param>
         private static void ValidateRange<U>(U minValue, U maxValue) where U : IComparable<U>
         {
-            TypeCode typeCode = Type.GetTypeCode(typeof(U));
+            Type typeCode = typeof(U);
 
             string type = 
-                typeCode == TypeCode.Int32 ? "dword" : 
-                typeCode == TypeCode.Int64 ? "qword" 
+                typeCode == typeof(int) ? "dword" : 
+                typeCode == typeof(long) ? "qword" 
                 : throw new ArgumentException("Registry entry type must be either Int32 or Int64 to use this validation.");
 
             if (minValue.CompareTo(default(U)) < 0)
@@ -500,12 +605,10 @@ namespace CSharpLibraSuite.WinRegistry
         /// Sets the validation to use an enumeration type
         /// </summary>
         /// <typeparam name="TEnum">The enumeration type.</typeparam>
-        /// <param name="caseSensitive">Flag indicating whether the validation should be case sensitive for strings (default: false).</param>
-        public WinRegistryEntry<T> SetValidation<TEnum>(bool caseSensitive = false) where TEnum : Enum
+        public WinRegistryEntry<T> SetValidation<TEnum>() where TEnum : Enum
         {
             ResetValidationRules();
 
-            CaseSensitive = caseSensitive;
             Type enumType = typeof(TEnum);
             if (enumType != null)
                 EnumType = enumType;
@@ -554,80 +657,10 @@ namespace CSharpLibraSuite.WinRegistry
 
         /******************************************
             * Private Methods
-            *      ReadRegistry()
-            *      WriteRegistry()
             *      ConvertValueBasedOnType()
+            *      LogError()
+            *      LogInfo()
         *******************************************/
-
-        /// <summary>
-        /// Reads the value of the registry entry from the specified registry path and returns it as a string.
-        /// </summary>
-        /// <returns>The value of the registry entry as a string.</returns>
-        private void ReadRegistry()
-        {
-            if (!IsReadable())
-                throw new InvalidOperationException("Unable to read registry key. Hive, path, and name are required.");
-
-            string rawValue = null;
-            string name = string.IsNullOrEmpty(Name) ? null : Name;
-
-            try
-            {
-                using var key = RegistryKey.OpenBaseKey(Hive, RegistryView.Default).OpenSubKey(Path);
-                if (key != null)
-                    RawValue = rawValue = key.GetValue(name)?.ToString();
-
-                if (rawValue != null)
-                    ValueKind = key.GetValueKind(name);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Error reading the Windows Registry.", ex);
-            }
-
-            if (string.IsNullOrEmpty(rawValue))
-                return;
-
-
-            Value = ConvertValueBasedOnType(rawValue);
-        }
-
-        /// <summary>
-        /// Writes the registry value to the specified registry path, handling exceptions if they occur.
-        /// </summary>
-        private void WriteRegistry()
-        {
-            if (!IsWritable())
-                throw new InvalidOperationException("Unable to write registry key. Hive, path, name, value kind, and value are required.");
-
-            string name = string.IsNullOrEmpty(Name) ? null : Name;
-            RegistryValueKind valueKind = string.IsNullOrEmpty(Name) ? RegistryValueKind.String : ValueKind;
-
-            string value;
-            if (typeof(T) == typeof(bool))
-            {
-                value = (bool)(object)Value
-                    ? ValueKind == RegistryValueKind.DWord ? "1" : "True"
-                    : ValueKind == RegistryValueKind.DWord ? "0" : "False";
-            }
-            else
-            {
-                value = Value.ToString();
-            }
-
-
-            try
-            {
-                using RegistryKey baseKey = RegistryKey.OpenBaseKey(Hive, RegistryView.Default);
-                using RegistryKey registryKey = baseKey.CreateSubKey(Path, true);
-
-                registryKey.SetValue(name, value, valueKind);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Error writing to the Windows Registry.", ex);
-            }
-        }
 
         /// <summary>
         /// Converts a string value to the specified .NET data type <typeparamref name="T"/>.
@@ -635,44 +668,57 @@ namespace CSharpLibraSuite.WinRegistry
         /// <typeparam name="T">The target .NET data type to which the value is converted.</typeparam>
         /// <param name="originalValue">The string value to be converted.</param>
         /// <returns>The converted value of type <typeparamref name="T"/>.</returns>
-        /// <exception cref="InvalidCastException">Thrown when the value cannot be converted to the specified type <typeparamref name="T"/>.</exception>
-        /// <exception cref="FormatException">Thrown when the format of the value is invalid for the specified type <typeparamref name="T"/>.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when Conversion for <typeparamref name="T"/> failed..</exception>
+        /// <exception cref="InvalidOperationException">Thrown when Conversion not supported for type <typeparamref name="T"/>.</exception>
         private T ConvertValueBasedOnType(string originalValue)
         {
             try
             {
-                switch (Type.GetTypeCode(typeof(T)))
+                if (ElementType == typeof(string))
                 {
-                    case TypeCode.String:
-                        return (T)(object)originalValue;
-                    case TypeCode.Int32:
-                        if (int.TryParse(originalValue, out int intValue))
-                            return (T)(object)intValue;
-                        break;
-                    case TypeCode.Int64:
-                        if (long.TryParse(originalValue, out long longValue))
-                            return (T)(object)longValue;
-                        break;
-                    case TypeCode.Boolean:
-                        if (bool.TryParse(originalValue, out bool boolValue))
-                            return (T)(object)boolValue;
-                        else if (int.TryParse(originalValue, out int intBool))
-                            return (T)(object)(intBool == 1);
-                        break;
-                    default:
-                        throw new InvalidOperationException($"Conversion not supported for type '{typeof(T)}'.");
+                    return (T)(object)originalValue;
+                }
+                else if (ElementType == typeof(int))
+                {
+                    if (int.TryParse(originalValue, out int intValue))
+                        return (T)(object)intValue;
+                }
+                else if (ElementType == typeof(long))
+                {
+                    if (long.TryParse(originalValue, out long longValue))
+                        return (T)(object)longValue;
+                }
+                else if (ElementType == typeof(bool))
+                {
+                    if (bool.TryParse(originalValue, out bool boolValue))
+                        return (T)(object)boolValue;
+                    else if (int.TryParse(originalValue, out int intBool))
+                        return (T)(object)(intBool == 1);
                 }
             }
-            catch (InvalidCastException)
+            catch
             {
-                throw new InvalidCastException($"Unable to convert value '{originalValue}' to type '{typeof(T)}'.");
+                throw new InvalidOperationException($"Conversion for '{ElementType}' failed.");
             }
-            catch (FormatException)
-            {
-                throw new FormatException($"Invalid format for value '{originalValue}' when converting to type '{typeof(T)}'.");
-            }
+            throw new InvalidOperationException($"Conversion not supported for type '{ElementType}'.");
+        }
 
-            throw new InvalidOperationException($"Conversion for '{typeof(T)}' failed.");
+        ///<summary>
+        ///Logs an error message to the standard error stream.
+        ///</summary>
+        ///<param name="message">The error message to log.</param>
+        private static void LogError(string message)
+        {
+            Console.Error.WriteLine($"Error: {message}");
+        }
+
+        ///<summary>
+        ///Logs an info message to the standard error stream.
+        ///</summary>
+        ///<param name="message">The error message to log.</param>
+        private static void LogInfo(string message)
+        {
+            Console.WriteLine($"Info: {message}");
         }
 
         #endregion
@@ -691,12 +737,10 @@ namespace CSharpLibraSuite.WinRegistry
         /// Validates the provided value based on its type-specific rules.
         /// </summary>
         /// <param name="value">The value to be validated.</param>
-        /// <exception cref="ArgumentException">
-        /// Thrown when the value is invalid based on its type-specific rules:
-        /// - If the value is of type <see cref="int"/> or <see cref="long"/> and is negative.
-        /// - If the value type is not supported.
-        /// </exception>
-        private void ValueValidationRules(T value)
+        /// <exception cref="ArgumentException">Thrown when <typeparamref name="T"/> is bool and value is not True, False, 0 or 1.</exception>
+        /// <exception cref="ArgumentException">Thrown when <typeparamref name="T"/> is int/long and value is negative.</exception>
+        /// <exception cref="ArgumentException">Thrown when Value type <typeparamref name="T"/> is not supported.</exception>
+        private T ValueValidationRules(T value)
         {
             // Boolean values are either string or DWORD. Mapping is needed to update ValueKind.
             var booleanRegistryValueKindMap = new Dictionary<string, RegistryValueKind>
@@ -707,66 +751,95 @@ namespace CSharpLibraSuite.WinRegistry
                 { "1", RegistryValueKind.DWord }
             };
 
-            switch (Type.GetTypeCode(typeof(T)))
+            // For string elements, directly enforce validity and correct the input.
+            if (ElementType == typeof(string))
             {
-                case TypeCode.String:
-                    // No validation needed for strings.
-                    break;
-
-                case TypeCode.Boolean:
-                    if (!booleanRegistryValueKindMap.TryGetValue(value.ToString().ToLower(), out var valueKind))
-                        throw new ArgumentException("Invalid value. Supported values are ci strings 'True'/'False' or numbers '0'/'1'.", nameof(value));
-
-                    ValueKind = valueKind;
-                    break;
-
-                case TypeCode.Int32:
-                case TypeCode.Int64:
-                    if (Convert.ToInt64(value) < 0)
-                        throw new ArgumentException("Value cannot be negative.", nameof(value));
-                    break;
-
-                // case TypeCode.Byte:
-                //     if (value == null || ((byte[])(object)value).Length == 0)
-                //     {
-                //         throw new ArgumentException("Value cannot be null or empty.", nameof(value));
-                //     }
-                //     break;
-
-                default:
-                    throw new ArgumentException($"Value type '{typeof(T).FullName}' is not supported.", nameof(value));
+                return EnforceStringInputValidity(value);
             }
+            // For boolean elements, check if the value is valid and convert it to the appropriate value kind.
+            else if (ElementType == typeof(bool))
+            {
+                if (!booleanRegistryValueKindMap.TryGetValue(value.ToString().ToLower(), out var valueKind))
+                    throw new ArgumentException("Invalid value. Supported values are ci strings 'True'/'False' or numbers '0'/'1'.", nameof(value));
+
+                ValueKind = valueKind;
+                return value;
+            }
+            // For integer or long elements, ensure the value is not negative.
+            else if (ElementType == typeof(int) || ElementType == typeof(long))
+            {
+                if (Convert.ToInt64(value) < 0)
+                    throw new ArgumentException("Value cannot be negative.", nameof(value));
+                return value;
+            }
+            // For byte elements, ensure the value is not null or empty.
+            else if (ElementType == typeof(byte))
+            {
+                if (value == null || ((byte[])(object)value).Length == 0)
+                    throw new ArgumentException("Value cannot be null or empty.", nameof(value));
+                return value;
+            }
+
+            // For unsupported element types, throw an ArgumentException.
+            throw new ArgumentException($"Value type '{ElementType.FullName}' is not supported.", nameof(value));
         }
+
+        /// <summary>
+        /// Validates and corrects a string value based on a set of allowed values or enumeration values.
+        /// </summary>
+        /// <param name="value">The input value to be validated and potentially corrected.</param>
+        /// <returns>The validated and potentially corrected value.</returns>
+        private T EnforceStringInputValidity(T value)
+        {
+            if (AllowedValues != null)
+            {
+                T matchedValue = AllowedValues.FirstOrDefault(v => v.ToString().Equals(value.ToString(), StringComparison.OrdinalIgnoreCase));
+
+                if (matchedValue != null)
+                    // Correct the Value to ensure the correct spelling and avoid user typing mistakes
+                    return matchedValue;
+            }
+            else if (EnumType != null && EnumType.IsEnum)
+            {
+                var matchedEnumValue = Enum.GetValues(EnumType)
+                          .Cast<Enum>()
+                          .FirstOrDefault(e => e.ToString().Equals(value.ToString(), StringComparison.OrdinalIgnoreCase));
+
+                if (matchedEnumValue != null)
+                    // Correct the Value to ensure the correct spelling and avoid user typing mistakes
+                    return ConvertValueBasedOnType(matchedEnumValue.ToString());
+            }
+
+            return value;
+        }
+
 
         /// <summary>
         /// Validates the specified registry value kind.
         /// </summary>
         /// <param name="valueKind">The registry value kind to validate.</param>
         /// <returns>The validated <see cref="RegistryValueKind"/>.</returns>
-        /// <exception cref="ArgumentException">
-        /// Thrown when the provided <paramref name="valueKind"/> is not a valid, defined <see cref="RegistryValueKind"/> value,
-        /// or if it is <see cref="RegistryValueKind.Unknown"/>, <see cref="RegistryValueKind.None"/>, or 0.
-        /// </exception>
-        private static RegistryValueKind ValueKindValidationRule(RegistryValueKind valueKind)
+        /// <exception cref="ArgumentException">Thrown when Invalid parameter: Unknown or unsupported <typeparamref name="valueKind" value.</exception>
+        /// <exception cref="ArgumentException">Thrown when Value type <typeparamref name="T"/> is not supported.</exception>
+        private bool ValueKindValidationRule(RegistryValueKind valueKind)
         {
             if (!Enum.IsDefined(typeof(RegistryValueKind), valueKind) || valueKind == RegistryValueKind.Unknown || valueKind == RegistryValueKind.None || valueKind == 0)
                 throw new ArgumentException("Invalid parameter: Unknown or unsupported RegistryValueKind value.", nameof(valueKind));
 
-            bool isValid = Type.GetTypeCode(typeof(T)) switch
+            return Type.GetTypeCode(ElementType) switch
             {
-                TypeCode.String => valueKind == RegistryValueKind.String,
                 TypeCode.Boolean => valueKind == RegistryValueKind.String || valueKind == RegistryValueKind.DWord,
                 TypeCode.Int32 => valueKind == RegistryValueKind.DWord,
                 TypeCode.Int64 => valueKind == RegistryValueKind.QWord,
-                //TypeCode.Byte => valueKind == RegistryValueKind.Binary,
-                _ => throw new ArgumentException($"Value type '{typeof(T).FullName}' is not supported.")
+                TypeCode.Byte => valueKind == RegistryValueKind.Binary,
+                TypeCode.String => valueKind == RegistryValueKind.String || valueKind == RegistryValueKind.DWord || valueKind == RegistryValueKind.QWord, // Strings are compatible with most data types.
+                _ => throw new ArgumentException($"Value type '{ElementType.FullName}' is not supported.")
             };
-
-            if (!isValid)
-                throw new ArgumentException($"Invalid parameter: {typeof(T).Name} should be set as {valueKind}.", nameof(valueKind));
-
-            return valueKind;
         }
+
+        #endregion
+
+        #region Private Initialisation Methods
 
         /// <summary>
         /// Determines the initial RegistryValueKind based on the type <typeparamref name="T"/>.
@@ -779,28 +852,9 @@ namespace CSharpLibraSuite.WinRegistry
                 TypeCode.Int32 => RegistryValueKind.DWord,
                 TypeCode.Int64 => RegistryValueKind.QWord,
                 TypeCode.Boolean => RegistryValueKind.String,
-                //TypeCode.Byte => RegistryValueKind.Binary,
-                _ => RegistryValueKind.String,// Default to String for unsupported types
+                TypeCode.Byte => RegistryValueKind.Binary,
+                _ => RegistryValueKind.String, // Default to String for unsupported types
             };
-        }
-
-        /// <summary>
-        /// Determines the initial default value based on the type <typeparamref name="T"/>.
-        /// </summary>
-        /// <returns>The initial default value determined by the type <typeparamref name="T"/>.</returns>
-        private static T InitialDefaultValue()
-        {
-            switch (Type.GetTypeCode(typeof(T)))
-            {
-                case TypeCode.Int32:
-                    return (T)(object)Convert.ToInt32(0);
-                case TypeCode.Int64:
-                    return (T)(object)Convert.ToInt64(0);
-                case TypeCode.Boolean:
-                    return (T)(object)Convert.ToBoolean(false);
-                default:
-                    return default; // Default to null for unsupported types
-            }
         }
 
         #endregion
@@ -809,10 +863,16 @@ namespace CSharpLibraSuite.WinRegistry
 
         /******************************************
             * Private Assert Methods
+            *      IsEntrySet()
             *      IsHiveSet()
             *      IsValueKindSet()
             *      IsPathSet()
         *******************************************/
+
+        /// <summary>
+        /// Determines whether the registry entry has been set.
+        /// </summary>
+        private bool IsEntrySet() => RawValue != null && ReadOperationSucceeded;
 
         /// <summary>
         /// Determines whether the registry hive has been explicitly set.
@@ -852,7 +912,6 @@ namespace CSharpLibraSuite.WinRegistry
         private void ResetValidationRules()
         {
             AllowedValues = null;
-            CaseSensitive = false;
 
             MinInt32Value = null;
             MaxInt32Value = null;
@@ -871,26 +930,16 @@ namespace CSharpLibraSuite.WinRegistry
         /// <returns>True if the value is valid; otherwise, false.</returns>
         private bool CheckIsValid()
         {
-            if (RawValue == null)
-                return false;
+            if (!IsEntrySet()) return false;
 
-            switch (Type.GetTypeCode(typeof(T)))
+            return Type.GetTypeCode(ElementType) switch
             {
-                case TypeCode.String:
-                    return ValidateString();
-
-                case TypeCode.Boolean:
-                    return true;
-
-                case TypeCode.Int32:
-                    return ValidateInt32();
-
-                case TypeCode.Int64:
-                    return ValidateInt64();
-
-                default:
-                    throw new ArgumentException($"Value type '{typeof(T).FullName}' is not supported.");
-            }
+                TypeCode.String => ValidateString(),
+                TypeCode.Boolean => true,
+                TypeCode.Int32 => ValidateInt32(),
+                TypeCode.Int64 => ValidateInt64(),
+                _ => throw new ArgumentException($"Value type '{ElementType.FullName}' is not supported."),
+            };
         }
 
         /// <summary>
@@ -899,19 +948,19 @@ namespace CSharpLibraSuite.WinRegistry
         /// <returns>True if the string value is valid; otherwise, false.</returns>
         private bool ValidateString()
         {
-            string value = Value.ToString();
-
             if (AllowedValues != null)
             {
-                return CaseSensitive
-                    ? AllowedValues.Contains(Value)
-                    : AllowedValues.Any(v => v.ToString().Equals(value, StringComparison.OrdinalIgnoreCase));
+                //return AllowedValues.FirstOrDefault(v => v.ToString().Equals(Value.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
+                return AllowedValues.Contains(Value);
             }
             else if (EnumType != null && EnumType.IsEnum)
             {
+                /*return Enum.GetValues(EnumType)
+                           .Cast<Enum>()
+                           .FirstOrDefault(e => e.ToString().Equals(Value.ToString(), StringComparison.OrdinalIgnoreCase)) != null;*/
                 return Enum.GetValues(EnumType)
                            .Cast<Enum>()
-                           .Any(e => e.ToString().Equals(value, StringComparison.OrdinalIgnoreCase));
+                           .Any(e => e.ToString().Equals(Value.ToString(), StringComparison.OrdinalIgnoreCase));
             }
 
             return true;

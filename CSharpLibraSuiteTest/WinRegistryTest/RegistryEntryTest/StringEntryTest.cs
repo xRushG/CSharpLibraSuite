@@ -31,17 +31,30 @@ namespace CSharpLibraSuiteTest.WinRegistryTest.RegistryEntryTest
         [Test]
         public void IsValid_AllowedValuesSet_ValueInAllowedValues_ReturnsTrue()
         {
-            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "Banana").Write());
-            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid").SetValidation(new string[] { "Banana", "Strawberry", "Apple" }).Read();
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "ArrayIsValid", "Banana").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "ArrayIsValid").SetValidation(new string[] { "Banana", "Strawberry", "Apple" }).Read();
             Assert.That(entry.IsValid, Is.True);
         }
         
         [Test]
         public void IsValid_AllowedValuesSet_ValueNotInAllowedValues_ReturnsFalse()
         {
-            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "Cheese").Write());
-            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid").SetValidation(new string[] { "Banana", "Strawberry", "Apple" }).Read();
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "ArrayIsInValid", "Cheese").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "ArrayIsInValid").SetValidation(new string[] { "Banana", "Strawberry", "Apple" }).Read();
             Assert.That(entry.IsValid, Is.False);
+        }
+
+        [Test]
+        public void IsValid_AllowedValuesSet_CorrectsValueSpellingAndValidatesSuccessfully()
+        {
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "ArrayCorrectsSpellingIsValid", "StrawBerry").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "ArrayCorrectsSpellingIsValid").SetValidation(new string[] { "Banana", "Strawberry", "Apple" }).Read();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(entry.IsValid, Is.True);
+                Assert.That(entry.Value, Is.EqualTo("Strawberry"));
+            });
         }
 
         [Test]
@@ -55,9 +68,21 @@ namespace CSharpLibraSuiteTest.WinRegistryTest.RegistryEntryTest
         [Test]
         public void IsValid_EnumSet_ValueNotInEnum_ReturnsFalse()
         {
-            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid", "Fourth").Write());
-            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValid").SetValidation<TestEnum>().Read();
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsInValid", "Fourth").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsInValid").SetValidation<TestEnum>().Read();
             Assert.That(entry.IsValid, Is.False);
+        }
+
+        [Test]
+        public void IsValid_EnumSet_CorrectsValueSpellingAndValidatesSuccessfully()
+        {
+            Assert.DoesNotThrow(() => WinRegistryEntry<string>.New(TestHive, TestPath, "IsValidCorrectsSpelling", "SecOND").Write());
+            var entry = WinRegistryEntry<string>.New(TestHive, TestPath, "IsValidCorrectsSpelling").SetValidation<TestEnum>().Read();
+            Assert.Multiple(() =>
+            {
+                Assert.That(entry.IsValid, Is.True);
+                Assert.That(entry.Value, Is.EqualTo("Second"));
+            });
         }
 
         [Test]

@@ -193,6 +193,48 @@ namespace CSharpLibraSuiteTest.WinRegistryTest.RegistryEntryTest
             });
         }
 
+        [Test]
+        public void Read_LockAfter_IsLocked()
+        {
+            var entry = WinRegistryEntry<string>
+                .New(TestHive, TestPath, "IsLockedAfter", "After")
+                .Write()
+                .Read()
+                .Lock();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(entry.IsLocked, Is.EqualTo(true));
+            });
+        }
+
+        [Test]
+        public void Read_LockBevore_IsLocked()
+        {
+            var entry = WinRegistryEntry<string>
+                .New(TestHive, TestPath, "IsLockedBevore", "Bevore")
+                .Write()
+                .Read()
+                .Lock();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(entry.IsLocked, Is.EqualTo(true));
+            });
+        }
+
+        [Test]
+        public void Read_Lock_ThrowWhenRead()
+        {
+            var entry = WinRegistryEntry<string>
+                .New(TestHive, TestPath, "ReadLockThrow", "ReadingIsLocked")
+                .Write()
+                .Read()
+                .Lock();
+
+            Assert.Throws<InvalidOperationException>(() => entry.Read());
+        }
+
         [OneTimeTearDown]
         public void Cleanup()
         {
