@@ -47,7 +47,7 @@ namespace CSharpLibraSuite.WinRegistry
     /// </remarks>
     public class WinRegistryEntry<T>
     {
-        #region Public Registry Properties
+        #region Registry Fileds & Properties
 
         /// <summary>
         /// Represents the registry hive associated with the registry key.
@@ -109,24 +109,19 @@ namespace CSharpLibraSuite.WinRegistry
 
         #endregion
 
-        #region Public Aditional Properties
+        #region Aditional Fileds & Properties
+
+        private T[] AllowedValues;
+        private int? MinInt32Value;
+        private int? MaxInt32Value;
+        private long? MinInt64Value;
+        private long? MaxInt64Value;
+        private Type EnumType;
 
         /// <summary>
         /// Represents the raw value retrieved directly from the registry.
         /// </summary>
         private string RawValue;
-
-        /// <summary>
-        /// Gets a value indicating whether the entry has been explicitly set in the registry.
-        /// This check is faster as it only verifies if a value was readed (set in registry).
-        /// </summary>
-        public bool IsSet => IsEntrySet();
-
-        /// <summary>
-        /// Gets a value indicating whether the entry's value is valid according to custom validation rules.
-        /// This check includes whether the value has been set and whether it adheres to the defined validation criteria.
-        /// </summary>
-        public bool IsValid => CheckIsValid();
 
         /// <summary>
         /// Represents the type of the generic parameter T.
@@ -148,29 +143,21 @@ namespace CSharpLibraSuite.WinRegistry
         /// </summary>
         public bool IsLocked { get; private set; }
 
+        /// <summary>
+        /// Gets a value indicating whether the entry has been explicitly set in the registry.
+        /// This check is faster as it only verifies if a value was readed (set in registry).
+        /// </summary>
+        public bool IsSet => IsEntrySet();
+
+        /// <summary>
+        /// Gets a value indicating whether the entry's value is valid according to custom validation rules.
+        /// This check includes whether the value has been set and whether it adheres to the defined validation criteria.
+        /// </summary>
+        public bool IsValid => CheckIsValid();
+
         #endregion
 
-        #region Private Validation Properties
-
-        private T[] AllowedValues;
-        private int? MinInt32Value;
-        private int? MaxInt32Value;
-        private long? MinInt64Value;
-        private long? MaxInt64Value;
-        private Type EnumType;
-
-        #endregion
-
-        #region Public Constructors
-
-        /******************************************
-            * Constructors
-            *      Empty()
-            *      Read default => (RegistryHive hive, string path)
-            *      Write default => (RegistryHive hive, string path, T value)
-            *      Read specific => (RegistryHive hive, string path, string name)
-            *      Write specific => (RegistryHive hive, string path, string name, T value)
-        *******************************************/
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WinRegistryEntry{T}"/> class with default values.
@@ -231,15 +218,7 @@ namespace CSharpLibraSuite.WinRegistry
 
         #endregion
 
-        #region Public Factory Methods
-
-        /******************************************
-            * Factory Methods
-            *      Read default => New(RegistryHive hive, string path)
-            *      Write default => New(RegistryHive hive, string path, T value)
-            *      Read specific => New(RegistryHive hive, string path, string name)
-            *      Write specific => New(RegistryHive hive, string path, string name, T value)
-        *******************************************/
+        #region Factory Methods
 
         /// <summary>
         /// Creates a new instance of the <see cref="WinRegistryEntry{T}"/> class for reading a default value from the specified registry hive and path.
@@ -291,15 +270,7 @@ namespace CSharpLibraSuite.WinRegistry
 
         #endregion
 
-        #region Public Fluent Interfaces
-
-        /******************************************
-            * Fluent Interfaces
-            *      SetValueKind()
-            *      SetDefaultValue()
-            *      Read()
-            *      Write()
-        *******************************************/
+        #region Public Methods
 
         /// <summary>
         /// Sets the kind of the registry value, ensuring it is a valid and defined <see cref="RegistryValueKind"/>.
@@ -316,6 +287,155 @@ namespace CSharpLibraSuite.WinRegistry
                 LogError("ValueKind is not valid and cannot be set."); 
 
             return this;
+        }
+
+        /// <summary>
+        /// Sets the allowed values for validation, with an option for case sensitivity.
+        /// </summary>
+        /// <param name="allowedValues">The array of allowed values.</param>
+        public WinRegistryEntry<T> SetValidation(T[] allowedValues)
+        {
+            ResetValidation();
+
+            if (allowedValues != null && allowedValues.Length > 0)
+            {
+                AllowedValues = allowedValues;
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets up validation using an array of allowed integer values.
+        /// </summary>
+        /// <param name="allowedValues">The array of allowed integer values.</param>
+        public WinRegistryEntry<T> SetValidation(int[] allowedValues)
+        {
+            T[] mappedValues = allowedValues?.Select(value => (T)(object)value).ToArray();
+            return SetValidation(mappedValues);
+        }
+
+        /// <summary>
+        /// Sets up validation using an array of allowed integer values.
+        /// </summary>
+        /// <param name="allowedValues">The array of allowed integer values.</param>
+        public WinRegistryEntry<T> SetValidation(long[] allowedValues)
+        {
+            T[] mappedValues = allowedValues?.Select(value => (T)(object)value).ToArray();
+            return SetValidation(mappedValues);
+        }
+
+        /// <summary>
+        /// Sets up validation for a range of integer values.
+        /// </summary>
+        /// <param name="minValue">The minimum value of the range.</param>
+        /// <param name="maxValue">The maximum value of the range.</param>
+        public WinRegistryEntry<T> SetValidation(int minValue, int maxValue)
+        {
+            ValidateRange(minValue, maxValue);
+            ResetValidation();
+
+            MinInt32Value = minValue;
+            MaxInt32Value = maxValue;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets up validation for a range of integer values.
+        /// </summary>
+        /// <param name="minValue">The minimum value of the range.</param>
+        /// <param name="maxValue">The maximum value of the range.</param>
+        public WinRegistryEntry<T> SetValidation(long minValue, long maxValue)
+        {
+            ValidateRange(minValue, maxValue);
+            ResetValidation();
+
+            MinInt64Value = minValue;
+            MaxInt64Value = maxValue;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets up validation rules for a range of Int32, Int64 values.
+        /// </summary>
+        /// <param name="minValue">The minimum value of the range. "*" can be provided to indicate no minimum value.</param>
+        /// <param name="maxValue">The maximum value of the range. "*" can be provided to indicate no maximum value.</param>
+        /// <returns>The current instance of the WinRegistryEntry<T> class.</returns>
+        /// <exception cref="ArgumentException">Thrown when the registry entry type is not a valid Int32 or Int64.</exception>
+        /// <exception cref="ArgumentException">Thrown when an invalid minimum value is provided for Int32 or Int64.</exception>
+        /// <exception cref="ArgumentException">Thrown when an invalid maximum value is provided for Int32 or Int64.</exception>
+
+        public WinRegistryEntry<T> SetValidation(string minValue, string maxValue)
+        {
+            if (string.IsNullOrEmpty(minValue) || minValue == "*")
+                minValue = "0";
+            if ((string.IsNullOrEmpty(maxValue) || maxValue == "*"))
+                maxValue = (ElementType == typeof(int))
+                    ? Int32.MaxValue.ToString()
+                    : Int64.MaxValue.ToString();
+
+            if (ElementType == typeof(int))
+            {
+                if (!int.TryParse(minValue, out int minIntValue))
+                    throw new ArgumentException("Invalid minimum value for Int32.");
+                if (!int.TryParse(maxValue, out int maxIntValue))
+                    throw new ArgumentException("Invalid maximum value for Int32.");
+
+                return SetValidation(minIntValue, maxIntValue);
+            }
+            else if (ElementType == typeof(long))
+            {
+                if (!long.TryParse(minValue, out long minLongValue))
+                    throw new ArgumentException("Invalid minimum value for Int64.");
+                if (!long.TryParse(maxValue, out long maxLongValue))
+                    throw new ArgumentException("Invalid maximum value for Int64.");
+
+                return SetValidation(minLongValue, maxLongValue);
+            }
+            else
+            {
+                throw new ArgumentException("Registry entry type must be either a valid Int32 or Int64 to use this validation.");
+            }
+        }
+
+        /// <summary>
+        /// Sets the validation to use an enumeration type
+        /// </summary>
+        /// <typeparam name="TEnum">The enumeration type.</typeparam>
+        public WinRegistryEntry<T> SetValidation<TEnum>() where TEnum : Enum
+        {
+            ResetValidation();
+
+            Type enumType = typeof(TEnum);
+            if (enumType != null)
+                EnumType = enumType;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Checks if the Windows Registry key is ready for reading by ensuring that the hive,
+        /// path, and name properties are set.
+        /// </summary>
+        /// <returns>True if the key is ready for reading, otherwise false.</returns>
+        public bool IsReadable()
+        {
+            return IsHiveSet() && IsPathSet();
+        }
+
+        /// <summary>
+        /// Checks if the Windows Registry key is ready for a write operation.
+        /// The key is considered write-ready if none of the following conditions are met:
+        /// - The hive is set
+        /// - The registry value type is set
+        /// - The key path is set
+        /// </summary>
+        /// <returns>Returns true if the key is write-ready, otherwise false.</returns>
+        public bool IsWritable()
+        {
+            return IsHiveSet() && IsValueKindSet() && IsPathSet();
         }
 
         /// <summary>
@@ -425,7 +545,7 @@ namespace CSharpLibraSuite.WinRegistry
         /// If a read operation has already succeeded, the entry is immediately locked.
         /// If no read operation has been performed yet, a flag indicating the intention to lock after a successful read operation is set.
         /// </summary>
-        /// /// <returns>The current instance of <see cref="WinRegistryEntry{T}"/> to allow for method chaining.</returns>
+        /// <returns>The current instance of <see cref="WinRegistryEntry{T}"/> to allow for method chaining.</returns>
         public WinRegistryEntry<T> Lock()
         {
             if (ReadOperationSucceeded)
@@ -438,229 +558,7 @@ namespace CSharpLibraSuite.WinRegistry
 
         #endregion
 
-        #region Public Set Validation Mehtods
-
-        /******************************************
-         * Methods be unified but for less redability its not done! 
-            * Public Validation Mehtods
-            *      SetValidation(T[] allowedValues)
-            *      SetValidation(int[] allowedValues)
-            *      SetValidation(long[] allowedValues)
-            *
-            *      
-            *      SetValidation(int minValue, int maxValue)
-            *      SetValidation(long minValue, long maxValue)
-            *      SetValidation(string minValue, string maxValue)
-            *      
-            *      SetValidation<TEnum>(bool caseSensitive = false) where TEnum : Enum
-        *******************************************/
-
-        #region SetValidation => arrays
-
-        /// <summary>
-        /// Sets the allowed values for validation, with an option for case sensitivity.
-        /// </summary>
-        /// <param name="allowedValues">The array of allowed values.</param>
-        public WinRegistryEntry<T> SetValidation(T[] allowedValues)
-        {
-            ResetValidationRules();
-
-            if (allowedValues != null && allowedValues.Length > 0)
-            {
-                AllowedValues = allowedValues;
-            }
-
-            return this;
-        }
-
-        /// <summary>
-        /// Sets up validation using an array of allowed integer values.
-        /// </summary>
-        /// <param name="allowedValues">The array of allowed integer values.</param>
-        public WinRegistryEntry<T> SetValidation(int[] allowedValues)
-        {
-            T[] mappedValues = allowedValues?.Select(value => (T)(object)value).ToArray();
-            return SetValidation(mappedValues);
-        }
-
-        /// <summary>
-        /// Sets up validation using an array of allowed integer values.
-        /// </summary>
-        /// <param name="allowedValues">The array of allowed integer values.</param>
-        public WinRegistryEntry<T> SetValidation(long[] allowedValues)
-        {
-            T[] mappedValues = allowedValues?.Select(value => (T)(object)value).ToArray();
-            return SetValidation(mappedValues);
-        }
-
-        #endregion
-
-        #region SetValidation => Min Max for Int and Long
-
-        /// <summary>
-        /// Sets up validation for a range of integer values.
-        /// </summary>
-        /// <param name="minValue">The minimum value of the range.</param>
-        /// <param name="maxValue">The maximum value of the range.</param>
-        public WinRegistryEntry<T> SetValidation(int minValue, int maxValue)
-        {
-            ValidateRange(minValue, maxValue);
-            ResetValidationRules();
-
-            MinInt32Value = minValue;
-            MaxInt32Value = maxValue;
-
-            return this;
-        }
-
-        /// <summary>
-        /// Sets up validation for a range of integer values.
-        /// </summary>
-        /// <param name="minValue">The minimum value of the range.</param>
-        /// <param name="maxValue">The maximum value of the range.</param>
-        public WinRegistryEntry<T> SetValidation(long minValue, long maxValue)
-        {
-            ValidateRange(minValue, maxValue);
-            ResetValidationRules();
-
-            MinInt64Value = minValue;
-            MaxInt64Value = maxValue;
-
-            return this;
-        }
-
-        /// <summary>
-        /// Sets up validation rules for a range of Int32, Int64 values.
-        /// </summary>
-        /// <param name="minValue">The minimum value of the range. "*" can be provided to indicate no minimum value.</param>
-        /// <param name="maxValue">The maximum value of the range. "*" can be provided to indicate no maximum value.</param>
-        /// <returns>The current instance of the WinRegistryEntry<T> class.</returns>
-        /// <exception cref="ArgumentException">Thrown when the registry entry type is not a valid Int32 or Int64.</exception>
-        /// <exception cref="ArgumentException">Thrown when an invalid minimum value is provided for Int32 or Int64.</exception>
-        /// <exception cref="ArgumentException">Thrown when an invalid maximum value is provided for Int32 or Int64.</exception>
-
-        public WinRegistryEntry<T> SetValidation(string minValue, string maxValue)
-        {
-            if (string.IsNullOrEmpty(minValue) || minValue == "*")
-                minValue = "0";
-            if ((string.IsNullOrEmpty(maxValue) || maxValue == "*"))
-                maxValue = (ElementType == typeof(int)) 
-                    ? Int32.MaxValue.ToString() 
-                    : Int64.MaxValue.ToString();
-
-            if (ElementType == typeof(int))
-            {
-                if (!int.TryParse(minValue, out int minIntValue))
-                    throw new ArgumentException("Invalid minimum value for Int32.");
-                if (!int.TryParse(maxValue, out int maxIntValue))
-                    throw new ArgumentException("Invalid maximum value for Int32.");
-
-                return SetValidation(minIntValue, maxIntValue);
-            }
-            else if (ElementType == typeof(long))
-            {
-                if (!long.TryParse(minValue, out long minLongValue))
-                    throw new ArgumentException("Invalid minimum value for Int64.");
-                if (!long.TryParse(maxValue, out long maxLongValue))
-                    throw new ArgumentException("Invalid maximum value for Int64.");
-
-                return SetValidation(minLongValue, maxLongValue);
-            }
-            else
-            {
-                throw new ArgumentException("Registry entry type must be either a valid Int32 or Int64 to use this validation.");
-            }
-        }
-
-
-        /// <summary>
-        /// Private method to validate the range values.
-        /// </summary>
-        /// <typeparam name="U">The type of the values being validated.</typeparam>
-        /// <param name="minValue">The minimum value of the range.</param>
-        /// <param name="maxValue">The maximum value of the range.</param>
-        /// <param name="type">The type of registry entry (used for error messages).</param>
-        private static void ValidateRange<U>(U minValue, U maxValue) where U : IComparable<U>
-        {
-            Type typeCode = typeof(U);
-
-            string type = 
-                typeCode == typeof(int) ? "dword" : 
-                typeCode == typeof(long) ? "qword" 
-                : throw new ArgumentException("Registry entry type must be either Int32 or Int64 to use this validation.");
-
-            if (minValue.CompareTo(default(U)) < 0)
-                throw new ArgumentException($"Negative value not allowed for {type} parameter.", nameof(minValue));
-            if (maxValue.CompareTo(default(U)) < 0)
-                throw new ArgumentException($"Negative value not allowed for {type} parameter.", nameof(maxValue));
-            if (minValue.CompareTo(maxValue) > 0)
-                throw new ArgumentException("MinValue must be less than or equal to MaxValue.");
-        }
-
-        #endregion
-
-        #region SetValidatio n => Enum
-
-        /// <summary>
-        /// Sets the validation to use an enumeration type
-        /// </summary>
-        /// <typeparam name="TEnum">The enumeration type.</typeparam>
-        public WinRegistryEntry<T> SetValidation<TEnum>() where TEnum : Enum
-        {
-            ResetValidationRules();
-
-            Type enumType = typeof(TEnum);
-            if (enumType != null)
-                EnumType = enumType;
-
-            return this;
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Public Methods
-
-        /******************************************
-            * Public Methods
-            *      IsReadable()
-            *      IsWritable()
-        *******************************************/
-
-        /// <summary>
-        /// Checks if the Windows Registry key is ready for reading by ensuring that the hive,
-        /// path, and name properties are set.
-        /// </summary>
-        /// <returns>True if the key is ready for reading, otherwise false.</returns>
-        public bool IsReadable()
-        {
-            return IsHiveSet() && IsPathSet();
-        }
-
-        /// <summary>
-        /// Checks if the Windows Registry key is ready for a write operation.
-        /// The key is considered write-ready if none of the following conditions are met:
-        /// - The hive is set
-        /// - The registry value type is set
-        /// - The key path is set
-        /// </summary>
-        /// <returns>Returns true if the key is write-ready, otherwise false.</returns>
-        public bool IsWritable()
-        {
-            return IsHiveSet() && IsValueKindSet() && IsPathSet();
-        }
-
-        #endregion
-
         #region Private Methods
-
-        /******************************************
-            * Private Methods
-            *      ConvertValueBasedOnType()
-            *      LogError()
-            *      LogInfo()
-        *******************************************/
 
         /// <summary>
         /// Converts a string value to the specified .NET data type <typeparamref name="T"/>.
@@ -703,35 +601,23 @@ namespace CSharpLibraSuite.WinRegistry
             throw new InvalidOperationException($"Conversion not supported for type '{ElementType}'.");
         }
 
-        ///<summary>
-        ///Logs an error message to the standard error stream.
-        ///</summary>
-        ///<param name="message">The error message to log.</param>
+        /// <summary>
+        /// Logs an error message to the standard error stream.
+        /// </summary>
+        /// <param name="message">The error message to log.</param>
         private static void LogError(string message)
         {
             Console.Error.WriteLine($"Error: {message}");
         }
 
-        ///<summary>
-        ///Logs an info message to the standard error stream.
-        ///</summary>
-        ///<param name="message">The error message to log.</param>
+        /// <summary>
+        /// Logs an info message to the standard error stream.
+        /// </summary>
+        /// <param name="message">The error message to log.</param>
         private static void LogInfo(string message)
         {
             Console.WriteLine($"Info: {message}");
         }
-
-        #endregion
-
-        #region Private Protperty Methods
-
-        /******************************************
-            * Private Protperty Methods
-            *      ValueValidationRules()
-            *      ValueKindValidationRule()
-            *      InitialRegistryValueKind()
-            *      InitialDefaultValue()
-        *******************************************/
 
         /// <summary>
         /// Validates the provided value based on its type-specific rules.
@@ -813,6 +699,29 @@ namespace CSharpLibraSuite.WinRegistry
             return value;
         }
 
+        /// <summary>
+        /// Private method to validate the range values.
+        /// </summary>
+        /// <typeparam name="U">The type of the values being validated.</typeparam>
+        /// <param name="minValue">The minimum value of the range.</param>
+        /// <param name="maxValue">The maximum value of the range.</param>
+        /// <param name="type">The type of registry entry (used for error messages).</param>
+        private static void ValidateRange<U>(U minValue, U maxValue) where U : IComparable<U>
+        {
+            Type typeCode = typeof(U);
+
+            string type =
+                typeCode == typeof(int) ? "dword" :
+                typeCode == typeof(long) ? "qword"
+                : throw new ArgumentException("Registry entry type must be either Int32 or Int64 to use this validation.");
+
+            if (minValue.CompareTo(default(U)) < 0)
+                throw new ArgumentException($"Negative value not allowed for {type} parameter.", nameof(minValue));
+            if (maxValue.CompareTo(default(U)) < 0)
+                throw new ArgumentException($"Negative value not allowed for {type} parameter.", nameof(maxValue));
+            if (minValue.CompareTo(maxValue) > 0)
+                throw new ArgumentException("MinValue must be less than or equal to MaxValue.");
+        }
 
         /// <summary>
         /// Validates the specified registry value kind.
@@ -837,10 +746,6 @@ namespace CSharpLibraSuite.WinRegistry
             };
         }
 
-        #endregion
-
-        #region Private Initialisation Methods
-
         /// <summary>
         /// Determines the initial RegistryValueKind based on the type <typeparamref name="T"/>.
         /// </summary>
@@ -856,18 +761,6 @@ namespace CSharpLibraSuite.WinRegistry
                 _ => RegistryValueKind.String, // Default to String for unsupported types
             };
         }
-
-        #endregion
-
-        #region Private Assert Methods
-
-        /******************************************
-            * Private Assert Methods
-            *      IsEntrySet()
-            *      IsHiveSet()
-            *      IsValueKindSet()
-            *      IsPathSet()
-        *******************************************/
 
         /// <summary>
         /// Determines whether the registry entry has been set.
@@ -892,38 +785,6 @@ namespace CSharpLibraSuite.WinRegistry
         /// <returns><c>true</c> if the path is set; otherwise, <c>false</c>.</returns>
         private bool IsPathSet() => Path != null;
 
-        #endregion
-
-        #region Private Value Validation
-
-        /******************************************
-            * Private Assert Methods
-            *      ResetValidationRules();
-            *      CheckIsValid()
-            *      ValidateString()
-            *      ValidateInt32()
-            *      ValidateInt64()
-        *******************************************/
-
-        /// <summary>
-        /// Resets all validation rules for the entry to their default values.
-        /// This includes clearing allowed values, resetting case sensitivity, setting numeric ranges and enum types to null.
-        /// </summary>
-        private void ResetValidationRules()
-        {
-            AllowedValues = null;
-
-            MinInt32Value = null;
-            MaxInt32Value = null;
-            MinInt64Value = null;
-            MaxInt64Value = null;
-
-            EnumType = null;
-        }
-
-        /// <summary>
-        /// Determines the validity of the registry entry's value after validation.
-        /// </summary>
         /// <summary>
         /// Checks if the current value is valid according to its type-specific rules and constraints.
         /// </summary>
@@ -940,6 +801,22 @@ namespace CSharpLibraSuite.WinRegistry
                 TypeCode.Int64 => ValidateInt64(),
                 _ => throw new ArgumentException($"Value type '{ElementType.FullName}' is not supported."),
             };
+        }
+
+        /// <summary>
+        /// Resets all validation setup for the entry to their default values.
+        /// This includes clearing allowed values, resetting case sensitivity, setting numeric ranges and enum types to null.
+        /// </summary>
+        private void ResetValidation()
+        {
+            AllowedValues = null;
+
+            MinInt32Value = null;
+            MaxInt32Value = null;
+            MinInt64Value = null;
+            MaxInt64Value = null;
+
+            EnumType = null;
         }
 
         /// <summary>
