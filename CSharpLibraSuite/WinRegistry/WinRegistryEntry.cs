@@ -530,6 +530,21 @@ namespace CSharpLibraSuite.WinRegistry
         }
 
         /// <summary>
+        /// Clears the current values of the instance.
+        /// </summary>
+        /// <remarks>
+        /// This method resets the values to their default states.
+        /// After invoking this method, the "Validations" properties <c>IsSet</c> and <c>IsValid</c> will return <c>false</c>. 
+        /// This is useful in scenarios where the value needs to be validated through alternative mechanisms.
+        /// </remarks>
+        public void Clear()
+        {
+            RawValue = null;
+            Value = default;
+            ReadOperationSucceeded = false;
+        }
+
+        /// <summary>
         /// Writes a new value to the registry entry.
         /// </summary>
         /// <param name="newValue">The new value to be written to the registry entry.</param>
